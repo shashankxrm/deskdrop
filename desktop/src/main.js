@@ -36,23 +36,11 @@ function createWindow() {
   mainWindow.hide();
 }
 
-function initializeServices() {
+async function initializeServices() {
   // Initialize clipboard service
   clipboardService = setupClipboardService();
   
-  // Initialize socket service
-  socketService = setupSocketService({
-    onLinkReceived: (linkData) => {
-      handleLinkReceived(linkData);
-    },
-    onConnectionStatusChange: (status, message) => {
-      if (trayManager) {
-        trayManager.updateConnectionStatus(status, message);
-      }
-    }
-  });
-  
-  // Initialize tray manager
+  // Initialize tray manager first
   trayManager = setupTrayManager({
     onQuit: () => {
       app.quit();
@@ -60,6 +48,18 @@ function initializeServices() {
     onReconnect: () => {
       if (socketService) {
         socketService.reconnect();
+      }
+    }
+  });
+  
+  // Initialize socket service (async - loads config file)
+  socketService = await setupSocketService({
+    onLinkReceived: (linkData) => {
+      handleLinkReceived(linkData);
+    },
+    onConnectionStatusChange: (status, message) => {
+      if (trayManager) {
+        trayManager.updateConnectionStatus(status, message);
       }
     }
   });
@@ -91,9 +91,9 @@ function handleLinkReceived(linkData) {
   }
 }
 
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
   createWindow();
-  initializeServices();
+  await initializeServices();
   
   app.on('activate', () => {
     // On macOS, re-create window when dock icon is clicked

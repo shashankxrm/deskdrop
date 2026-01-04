@@ -5,7 +5,7 @@ let config = null;
 let reconnectAttempts = 0;
 const MAX_RECONNECT_ATTEMPTS = 10;
 
-export const setupSocketService = (callbacks) => {
+export const setupSocketService = async (callbacks) => {
   config = {
     serverUrl: process.env.BACKEND_URL || 'http://localhost:3000',
     pairingToken: process.env.PAIRING_TOKEN || null,
@@ -14,8 +14,11 @@ export const setupSocketService = (callbacks) => {
   };
 
   // Try to load pairing token from config file or environment
-  // Will be called after Electron app is ready
-  loadPairingTokenFromConfig();
+  // Wait for Electron app to be ready
+  await loadPairingTokenFromConfig();
+  
+  console.log('Final config - serverUrl:', config.serverUrl);
+  console.log('Final config - pairingToken:', config.pairingToken ? '***' + config.pairingToken.slice(-4) : 'NOT SET');
 
   if (!config.pairingToken) {
     console.error('Pairing token not found. Please set PAIRING_TOKEN environment variable or create config file.');
@@ -41,30 +44,48 @@ export const setupSocketService = (callbacks) => {
 };
 
 async function loadPairingTokenFromConfig() {
-  // Try to load from environment variable first
-  if (process.env.PAIRING_TOKEN) {
-    config.pairingToken = process.env.PAIRING_TOKEN;
-    return;
-  }
-
-  // Try to load from config file (for production use)
+  // Priority: Config file first (for production), then environment variables (for development)
+  
+  // Try to load from config file first (production use)
   try {
-    const fs = await import('fs');
-    const path = await import('path');
-    const electron = await import('electron');
-    const userDataPath = electron.app.getPath('userData');
-    const configPath = path.join(userDataPath, 'config.json');
+    const { readFileSync, existsSync } = await import('fs');
+    const { join } = await import('path');
+    const { app } = await import('electron');
     
-    if (fs.existsSync(configPath)) {
-      const configData = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+    // Wait a bit for app to be ready
+    if (!app || !app.isReady()) {
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    }
+    
+    const userDataPath = app.getPath('userData');
+    const configPath = join(userDataPath, 'config.json');
+    
+    if (existsSync(configPath)) {
+      const configData = JSON.parse(readFileSync(configPath, 'utf8'));
+      console.log('Loaded config from file:', configPath);
+      
       if (configData.pairingToken) {
         config.pairingToken = configData.pairingToken;
-        config.serverUrl = configData.serverUrl || config.serverUrl;
+        console.log('Using pairing token from config file');
+      }
+      if (configData.serverUrl) {
+        config.serverUrl = configData.serverUrl;
+        console.log('Using server URL from config file:', config.serverUrl);
+        return; // Config file takes priority, don't check env vars
       }
     }
   } catch (error) {
-    // Config file not available or Electron not ready - will use env var or fail gracefully
-    console.log('Could not load config file (this is OK if using env vars):', error.message);
+    console.log('Could not load config file, falling back to environment variables:', error.message);
+  }
+  
+  // Fall back to environment variables (for development)
+  if (process.env.PAIRING_TOKEN) {
+    config.pairingToken = process.env.PAIRING_TOKEN;
+    console.log('Using PAIRING_TOKEN from environment');
+  }
+  if (process.env.BACKEND_URL) {
+    config.serverUrl = process.env.BACKEND_URL;
+    console.log('Using BACKEND_URL from environment:', config.serverUrl);
   }
 }
 
@@ -74,6 +95,7 @@ function connect() {
   }
 
   console.log(`Connecting to ${config.serverUrl}...`);
+  console.log('Using pairing token:', config.pairingToken ? '***' + config.pairingToken.slice(-4) : 'NOT SET');
 
   socket = io(config.serverUrl, {
     auth: {

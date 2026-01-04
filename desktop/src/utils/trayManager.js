@@ -25,29 +25,9 @@ export const setupTrayManager = (callbacks) => {
       throw new Error('Icon file not found');
     }
   } catch (error) {
-    // Create a simple template image for macOS (16x16 white square with D)
-    // Template images are automatically colored by macOS
-    const { createCanvas } = require('canvas');
-    try {
-      const canvas = createCanvas(16, 16);
-      const ctx = canvas.getContext('2d');
-      ctx.fillStyle = 'white';
-      ctx.fillRect(0, 0, 16, 16);
-      ctx.fillStyle = 'black';
-      ctx.font = 'bold 12px Arial';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText('D', 8, 8);
-      const buffer = canvas.toBuffer('image/png');
-      trayIcon = nativeImage.createFromBuffer(buffer);
-      trayIcon.setTemplateImage(true); // Make it a template image for macOS
-    } catch (canvasError) {
-      // Fallback: create a simple 16x16 image using nativeImage
-      const simpleIcon = nativeImage.createEmpty();
-      // On macOS, we can use a simple approach
-      trayIcon = simpleIcon;
-    }
-    console.log('Using generated tray icon');
+    // Fallback: use empty image (system will use default)
+    trayIcon = undefined;
+    console.log('Using default tray icon');
   }
 
   // Create tray with icon
