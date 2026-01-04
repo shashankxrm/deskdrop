@@ -8,8 +8,9 @@ import retrofit2.converter.gson.GsonConverterFactory
 import java.util.concurrent.TimeUnit
 
 object ApiClient {
-    // For physical device, use your computer's IP:
-    private const val BASE_URL = "http://192.168.0.166:3000/api/"
+    // Production backend URL (Render)
+    private const val BASE_URL = "https://deskdrop-backend.onrender.com/api/"
+    // For local development, use: "http://192.168.0.166:3000/api/"
     // For emulator, use: "http://10.0.2.2:3000/api/"
     
     private var retrofit: Retrofit? = null

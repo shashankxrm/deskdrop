@@ -1,5 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <network-security-config>
+    <!-- Allow HTTPS to Render (production) -->
+    <domain-config cleartextTrafficPermitted="false">
+        <domain includeSubdomains="true">deskdrop-backend.onrender.com</domain>
+    </domain-config>
+    <!-- Allow HTTP for local development -->
     <domain-config cleartextTrafficPermitted="true">
         <domain includeSubdomains="true">192.168.0.166</domain>
         <domain includeSubdomains="true">localhost</domain>
