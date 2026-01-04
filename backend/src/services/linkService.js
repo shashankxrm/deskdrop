@@ -15,14 +15,32 @@ export const deliverLink = async (userId, deviceId, url, io) => {
     console.log(`Link saved to database: ${url} from Android device ${deviceId}`);
 
     // Find the desktop device for this user (desktop devices have pairingToken)
-    // Prioritize online devices first
-    let desktopDevice = await Device.findOne({ 
+    // Get all online desktop devices for this user
+    const onlineDesktopDevices = await Device.find({ 
       userId,
-      pairingToken: { $ne: null }, // Desktop devices have pairing tokens
-      isOnline: true // Prefer online devices
+      pairingToken: { $ne: null },
+      isOnline: true,
+      socketId: { $ne: null }
     });
 
-    // If no online device, find any desktop device for this user
+    // Find the device with a valid socket connection
+    let desktopDevice = null;
+    for (const device of onlineDesktopDevices) {
+      const socket = io.sockets.sockets.get(device.socketId);
+      if (socket) {
+        desktopDevice = device;
+        console.log(`Found valid online desktop device: ${device.deviceId}`);
+        break;
+      } else {
+        // Socket doesn't exist, mark device as offline
+        console.log(`Socket ${device.socketId} for device ${device.deviceId} doesn't exist, marking offline`);
+        device.isOnline = false;
+        device.socketId = null;
+        await device.save();
+      }
+    }
+
+    // If no valid online device, find any desktop device for this user (offline)
     if (!desktopDevice) {
       desktopDevice = await Device.findOne({ 
         userId,
