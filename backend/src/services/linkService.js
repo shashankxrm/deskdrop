@@ -15,10 +15,20 @@ export const deliverLink = async (userId, deviceId, url, io) => {
     console.log(`Link saved to database: ${url} from Android device ${deviceId}`);
 
     // Find the desktop device for this user (desktop devices have pairingToken)
-    const desktopDevice = await Device.findOne({ 
+    // Prioritize online devices first
+    let desktopDevice = await Device.findOne({ 
       userId,
-      pairingToken: { $ne: null } // Desktop devices have pairing tokens
+      pairingToken: { $ne: null }, // Desktop devices have pairing tokens
+      isOnline: true // Prefer online devices
     });
+
+    // If no online device, find any desktop device for this user
+    if (!desktopDevice) {
+      desktopDevice = await Device.findOne({ 
+        userId,
+        pairingToken: { $ne: null }
+      });
+    }
 
     if (!desktopDevice) {
       console.log(`No desktop device found for user ${userId}`);
@@ -46,6 +56,12 @@ export const deliverLink = async (userId, deviceId, url, io) => {
         await link.save();
         console.log(`Link delivered to desktop device ${desktopDevice.deviceId} via Socket.IO`);
         return { success: true, delivered: true };
+      } else {
+        // Socket not found, mark device as offline
+        console.log(`Socket ${desktopDevice.socketId} not found, marking device as offline`);
+        desktopDevice.isOnline = false;
+        desktopDevice.socketId = null;
+        await desktopDevice.save();
       }
     }
 
@@ -75,11 +91,25 @@ export const processQueuedLinksForDevice = async (deviceId, socketId, io) => {
 
     const userId = device.userId;
     
-    // Check both queue keys: device-specific and user-specific (for links queued before device was registered)
+    // Find all desktop devices for this user (to check their queues)
+    const allUserDevices = await Device.find({ 
+      userId,
+      pairingToken: { $ne: null } // All desktop devices for this user
+    });
+    
+    // Check queues for: current device, user queue, and all other devices for this user
     const deviceQueuedLinks = await getQueuedLinksForDevice(deviceId);
     const userQueuedLinks = await getQueuedLinksForDevice(`user-${userId}`);
     
-    const allQueuedLinks = [...deviceQueuedLinks, ...userQueuedLinks];
+    // Also check queues for other devices (in case links were queued for old devices)
+    const otherDeviceQueues = await Promise.all(
+      allUserDevices
+        .filter(d => d.deviceId !== deviceId)
+        .map(d => getQueuedLinksForDevice(d.deviceId))
+    );
+    const otherDeviceLinks = otherDeviceQueues.flat();
+    
+    const allQueuedLinks = [...deviceQueuedLinks, ...userQueuedLinks, ...otherDeviceLinks];
     
     if (allQueuedLinks.length === 0) {
       console.log(`No queued links found for device ${deviceId} or user ${userId}`);
@@ -107,9 +137,14 @@ export const processQueuedLinksForDevice = async (deviceId, socketId, io) => {
       }
     }
 
-    // Clear both queues
+    // Clear all queues: current device, user queue, and all other devices for this user
     await clearQueueForDevice(deviceId);
     await clearQueueForDevice(`user-${userId}`);
+    for (const otherDevice of allUserDevices) {
+      if (otherDevice.deviceId !== deviceId) {
+        await clearQueueForDevice(otherDevice.deviceId);
+      }
+    }
     console.log(`Delivered and cleared ${allQueuedLinks.length} queued links`);
   } catch (error) {
     console.error('Error processing queued links:', error);
