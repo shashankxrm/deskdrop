@@ -66,12 +66,27 @@ export const deliverLink = async (userId, deviceId, url, io) => {
 
 export const processQueuedLinksForDevice = async (deviceId, socketId, io) => {
   try {
-    const queuedLinks = await getQueuedLinksForDevice(deviceId);
-    if (queuedLinks.length === 0) {
+    // Get device to find userId
+    const device = await Device.findOne({ deviceId });
+    if (!device) {
+      console.log(`Device ${deviceId} not found for processing queued links`);
       return;
     }
 
-    console.log(`Processing ${queuedLinks.length} queued links for device ${deviceId}`);
+    const userId = device.userId;
+    
+    // Check both queue keys: device-specific and user-specific (for links queued before device was registered)
+    const deviceQueuedLinks = await getQueuedLinksForDevice(deviceId);
+    const userQueuedLinks = await getQueuedLinksForDevice(`user-${userId}`);
+    
+    const allQueuedLinks = [...deviceQueuedLinks, ...userQueuedLinks];
+    
+    if (allQueuedLinks.length === 0) {
+      console.log(`No queued links found for device ${deviceId} or user ${userId}`);
+      return;
+    }
+
+    console.log(`Processing ${allQueuedLinks.length} queued links for device ${deviceId} (user: ${userId})`);
     
     const socket = io.sockets.sockets.get(socketId);
     if (!socket) {
@@ -80,7 +95,7 @@ export const processQueuedLinksForDevice = async (deviceId, socketId, io) => {
     }
 
     // Deliver all queued links
-    for (const linkData of queuedLinks) {
+    for (const linkData of allQueuedLinks) {
       socket.emit('link-received', linkData);
       
       // Update link status in database
@@ -92,9 +107,10 @@ export const processQueuedLinksForDevice = async (deviceId, socketId, io) => {
       }
     }
 
-    // Clear the queue
+    // Clear both queues
     await clearQueueForDevice(deviceId);
-    console.log(`Delivered and cleared ${queuedLinks.length} queued links`);
+    await clearQueueForDevice(`user-${userId}`);
+    console.log(`Delivered and cleared ${allQueuedLinks.length} queued links`);
   } catch (error) {
     console.error('Error processing queued links:', error);
   }
