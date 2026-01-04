@@ -1,0 +1,21 @@
+{
+  "name": "deskdrop-desktop",
+  "version": "1.0.0",
+  "description": "DeskDrop Desktop App - Electron app for receiving links from Android",
+  "main": "src/main.js",
+  "type": "module",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --dev"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "socket.io-client": "^4.7.2"
+  },
+  "devDependencies": {
+    "electron": "^28.0.0"
+  }
+}
+
