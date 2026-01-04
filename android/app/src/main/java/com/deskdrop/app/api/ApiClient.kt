@@ -30,8 +30,11 @@ object ApiClient {
                         .build()
                     chain.proceed(request)
                 }
-                .connectTimeout(30, TimeUnit.SECONDS)
-                .readTimeout(30, TimeUnit.SECONDS)
+                // Increased timeouts to handle Render cold starts (~30-60 seconds)
+                .connectTimeout(90, TimeUnit.SECONDS)
+                .readTimeout(90, TimeUnit.SECONDS)
+                .writeTimeout(90, TimeUnit.SECONDS)
+                .retryOnConnectionFailure(true)
                 .build()
             
             retrofit = Retrofit.Builder()

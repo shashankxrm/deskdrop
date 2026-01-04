@@ -87,6 +87,9 @@ class ShareActivity : AppCompatActivity() {
         return match?.value
     }
     
+    private var retryCount = 0
+    private val MAX_RETRIES = 2
+    
     private fun submitLink(url: String) {
         if (deviceId == null) {
             showError("Device ID not available")
@@ -95,7 +98,11 @@ class ShareActivity : AppCompatActivity() {
         
         // Update UI to show loading state
         submitButton.isEnabled = false
-        statusTextView.text = "Submitting..."
+        if (retryCount == 0) {
+            statusTextView.text = "Submitting..."
+        } else {
+            statusTextView.text = "Retrying... (${retryCount}/${MAX_RETRIES})"
+        }
         
         val request = com.deskdrop.app.api.models.LinkRequest(
             url = url,
@@ -108,6 +115,7 @@ class ShareActivity : AppCompatActivity() {
                 response: Response<com.deskdrop.app.api.models.LinkResponse>
             ) {
                 submitButton.isEnabled = true
+                retryCount = 0 // Reset on success
                 
                 if (response.isSuccessful) {
                     val linkResponse = response.body()
@@ -121,16 +129,40 @@ class ShareActivity : AppCompatActivity() {
                         showError("Failed to submit link")
                     }
                 } else {
-                    val errorBody = response.errorBody()?.string()
-                    showError("Server error: ${response.code()}")
+                    // Server error - might be cold start, retry
+                    if (response.code() == 503 || response.code() == 504) {
+                        retryWithDelay(url)
+                    } else {
+                        val errorBody = response.errorBody()?.string()
+                        showError("Server error: ${response.code()}")
+                    }
                 }
             }
             
             override fun onFailure(call: Call<com.deskdrop.app.api.models.LinkResponse>, t: Throwable) {
-                submitButton.isEnabled = true
-                showError("Network error: ${t.message}")
+                // Network/timeout error - retry for cold starts
+                if (retryCount < MAX_RETRIES && (t.message?.contains("timeout", ignoreCase = true) == true || 
+                    t.message?.contains("failed to connect", ignoreCase = true) == true)) {
+                    retryWithDelay(url)
+                } else {
+                    submitButton.isEnabled = true
+                    retryCount = 0
+                    showError("Network error: ${t.message}")
+                }
             }
         })
+    }
+    
+    private fun retryWithDelay(url: String) {
+        retryCount++
+        statusTextView.text = "Server waking up... Retrying (${retryCount}/${MAX_RETRIES})"
+        
+        // Exponential backoff: 2s, 4s
+        val delayMs = (2000 * retryCount).toLong()
+        
+        android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+            submitLink(url)
+        }, delayMs)
     }
     
     private fun showError(message: String) {
