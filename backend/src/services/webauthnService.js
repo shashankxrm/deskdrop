@@ -14,11 +14,14 @@ const origin = process.env.WEBAUTHN_ORIGIN || `http://${rpID}:3000`;
 /**
  * Generate registration challenge for new passkey
  */
-export async function generateRegistrationChallenge(userId, userName, existingCredentials = []) {
+export async function generateRegistrationChallenge(userId, userName, existingCredentials = [], clientType = 'web') {
   try {
+    // For Electron clients, use localhost as rpID
+    const effectiveRPID = (clientType === 'electron' || clientType === 'desktop') ? 'localhost' : rpID;
+    
     const options = await generateRegistrationOptions({
       rpName,
-      rpID,
+      rpID: effectiveRPID,
       userName,
       userID: Buffer.from(userId),
       userDisplayName: userName,
@@ -116,15 +119,18 @@ export async function verifyRegistration(userId, response, challenge, deviceName
 /**
  * Generate authentication challenge for existing passkey
  */
-export async function generateAuthenticationChallenge(userId) {
+export async function generateAuthenticationChallenge(userId, clientType = 'web') {
   try {
     const user = await User.findOne({ userId });
     if (!user || !user.credentials || user.credentials.length === 0) {
       throw new Error('No credentials found for user');
     }
     
+    // For Electron clients, use localhost as rpID
+    const effectiveRPID = (clientType === 'electron' || clientType === 'desktop') ? 'localhost' : rpID;
+    
     const options = await generateAuthenticationOptions({
-      rpID,
+      rpID: effectiveRPID,
       allowCredentials: user.credentials.map(cred => ({
         id: Buffer.from(cred.credentialID),
         type: 'public-key',

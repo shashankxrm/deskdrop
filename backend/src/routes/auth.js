@@ -38,11 +38,15 @@ router.post('/register/start', async (req, res) => {
     // Generate userId if new user
     const userId = user?.userId || email; // Using email as userId for simplicity
     
+    // Check if this is an Electron client (from User-Agent or custom header)
+    const clientType = req.headers['x-client-type'] || 'web';
+    
     // Generate registration challenge
     const options = await generateRegistrationChallenge(
       userId,
       userName,
-      existingCredentials
+      existingCredentials,
+      clientType
     );
     
     res.json({ 
@@ -153,8 +157,11 @@ router.post('/login/start', async (req, res) => {
       });
     }
     
+    // Check if this is an Electron client
+    const clientType = req.headers['x-client-type'] || 'web';
+    
     // Generate authentication challenge
-    const options = await generateAuthenticationChallenge(user.userId);
+    const options = await generateAuthenticationChallenge(user.userId, clientType);
     
     res.json({ 
       success: true,
