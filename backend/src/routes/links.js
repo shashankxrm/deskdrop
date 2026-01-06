@@ -1,11 +1,11 @@
 import express from 'express';
 import { deliverLink } from '../services/linkService.js';
-import { authenticateDevToken } from '../middleware/auth.js';
+import { authenticate } from '../middleware/auth.js';
 
 const router = express.Router();
 
 // POST /api/links - Receive link from Android
-router.post('/', authenticateDevToken, async (req, res) => {
+router.post('/', authenticate, async (req, res) => {
   try {
     const { url } = req.body;
     const userId = req.userId; // Set by auth middleware
@@ -50,7 +50,7 @@ router.post('/', authenticateDevToken, async (req, res) => {
 });
 
 // GET /api/links - Get link history (optional for MVP)
-router.get('/', authenticateDevToken, async (req, res) => {
+router.get('/', authenticate, async (req, res) => {
   try {
     const userId = req.userId;
     if (!userId) {

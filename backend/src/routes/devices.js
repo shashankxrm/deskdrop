@@ -1,12 +1,12 @@
 import express from 'express';
 import { Device } from '../models/Device.js';
 import crypto from 'crypto';
-import { authenticateDevToken } from '../middleware/auth.js';
+import { authenticate } from '../middleware/auth.js';
 
 const router = express.Router();
 
 // POST /api/devices/pair - Device pairing endpoint
-router.post('/pair', authenticateDevToken, async (req, res) => {
+router.post('/pair', authenticate, async (req, res) => {
   try {
     const userId = req.userId;
     const { pairingToken, deviceName } = req.body;
@@ -42,7 +42,7 @@ router.post('/pair', authenticateDevToken, async (req, res) => {
 });
 
 // POST /api/devices/generate-pairing-token - Generate new pairing token for desktop
-router.post('/generate-pairing-token', authenticateDevToken, async (req, res) => {
+router.post('/generate-pairing-token', authenticate, async (req, res) => {
   try {
     const userId = req.userId;
     const { deviceName } = req.body;
@@ -75,7 +75,7 @@ router.post('/generate-pairing-token', authenticateDevToken, async (req, res) =>
 });
 
 // GET /api/devices - Get user's devices
-router.get('/', authenticateDevToken, async (req, res) => {
+router.get('/', authenticate, async (req, res) => {
   try {
     const userId = req.userId;
     const devices = await Device.find({ userId })
