@@ -95,16 +95,46 @@ DEV_TOKEN=dev-token-for-testing-change-in-production
 DEV_TOKEN=my-secret-dev-token-12345
 ```
 
-### 5. WebAuthn Configuration (Optional - for future)
+### 5. WebAuthn Configuration
 
 ```env
-RP_ID=localhost
-RP_NAME=DeskDrop
-RP_ORIGIN=http://localhost:3000
+WEBAUTHN_RP_ID=localhost
+WEBAUTHN_RP_NAME=DeskDrop
+WEBAUTHN_ORIGIN=http://localhost:3000
 ```
 
-- These are placeholders for future WebAuthn implementation
-- **No changes needed** for MVP (using dev-token instead)
+- **WEBAUTHN_RP_ID**: Relying Party ID (domain name)
+  - For local dev: `localhost`
+  - For production: Your domain (e.g., `deskdrop-backend.onrender.com`)
+- **WEBAUTHN_RP_NAME**: Display name for your app
+- **WEBAUTHN_ORIGIN**: Full origin URL
+  - For local dev: `http://localhost:3000`
+  - For production: `https://your-domain.com`
+
+**Important Notes:**
+- `RP_ID` must match your domain (no protocol, no port for HTTPS)
+- `ORIGIN` must include protocol and port
+- For production, ensure your domain matches the RP_ID
+
+### 6. JWT Configuration
+
+```env
+JWT_SECRET=your-jwt-secret-key-here
+JWT_REFRESH_SECRET=your-refresh-secret-key-here
+JWT_EXPIRES_IN=7d
+JWT_REFRESH_EXPIRES_IN=30d
+```
+
+- **JWT_SECRET**: Secret key for signing access tokens (use a strong random string)
+- **JWT_REFRESH_SECRET**: Secret key for signing refresh tokens (different from JWT_SECRET)
+- **JWT_EXPIRES_IN**: Access token expiration (default: 7 days)
+- **JWT_REFRESH_EXPIRES_IN**: Refresh token expiration (default: 30 days)
+
+**Security Notes:**
+- Generate strong random secrets for production
+- Never commit secrets to version control
+- Use different secrets for development and production
+- Example: `openssl rand -base64 32` to generate secrets
 
 ---
 
