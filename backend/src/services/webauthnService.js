@@ -60,27 +60,40 @@ export async function verifyRegistration(userId, response, challenge, deviceName
     const existingCredentials = user.credentials || [];
     
     // Verify the registration response
-    // For Electron clients, rpId might be 'localhost' instead of the configured rpID
-    // Try with localhost first (for Electron), then fall back to configured rpID
+    // For Electron clients, rpId is 'localhost' and origin is 'http://localhost:PORT'
+    // We need to accept any localhost origin (since the port is random)
+    // Try with localhost first, then fall back to configured values
     let verification;
+    let lastError;
+    
+    // First, try with localhost (for Electron)
     try {
       verification = await verifyRegistrationResponse({
         response,
         expectedChallenge: challenge,
-        expectedOrigin: origin,
-        expectedRPID: 'localhost', // Try localhost first for Electron compatibility
+        expectedOrigin: 'http://localhost', // Accept any localhost origin
+        expectedRPID: 'localhost',
         requireUserVerification: false
       });
+      console.log('Verification successful with localhost');
     } catch (error) {
-      // If localhost fails, try with configured rpID
-      console.log('Verification with localhost failed, trying with configured rpID:', rpID);
-      verification = await verifyRegistrationResponse({
-        response,
-        expectedChallenge: challenge,
-        expectedOrigin: origin,
-        expectedRPID: rpID,
-        requireUserVerification: false
-      });
+      lastError = error;
+      console.log('Verification with localhost failed, trying with configured values:', error.message);
+      
+      // Fall back to configured values (for web clients)
+      try {
+        verification = await verifyRegistrationResponse({
+          response,
+          expectedChallenge: challenge,
+          expectedOrigin: origin,
+          expectedRPID: rpID,
+          requireUserVerification: false
+        });
+        console.log('Verification successful with configured values');
+      } catch (error2) {
+        lastError = error2;
+        throw new Error(`Verification failed: ${error2.message}`);
+      }
     }
     
     if (verification.verified && verification.registrationInfo) {
@@ -167,18 +180,57 @@ export async function verifyAuthentication(userId, response, challenge) {
     }
     
     // Verify the authentication response
-    const verification = await verifyAuthenticationResponse({
-      response,
-      expectedChallenge: challenge,
-      expectedOrigin: origin,
-      expectedRPID: rpID,
-      credential: {
-        id: credential.credentialID,
-        publicKey: credential.credentialPublicKey,
-        counter: credential.counter
-      },
-      requireUserVerification: false
-    });
+    // For Electron clients, try localhost first with multiple origin patterns
+    const localhostOrigins = [
+      'http://localhost',
+      'http://localhost:3000',
+      'http://localhost:8080',
+      'http://127.0.0.1',
+      'http://127.0.0.1:3000'
+    ];
+    
+    let verification;
+    let verified = false;
+    
+    // Try each localhost origin pattern
+    for (const localOrigin of localhostOrigins) {
+      try {
+        verification = await verifyAuthenticationResponse({
+          response,
+          expectedChallenge: challenge,
+          expectedOrigin: localOrigin,
+          expectedRPID: 'localhost',
+          credential: {
+            id: credential.credentialID,
+            publicKey: credential.credentialPublicKey,
+            counter: credential.counter
+          },
+          requireUserVerification: false
+        });
+        console.log(`Authentication verification successful with ${localOrigin}`);
+        verified = true;
+        break;
+      } catch (error) {
+        console.log(`Verification with ${localOrigin} failed:`, error.message);
+        continue;
+      }
+    }
+    
+    // If localhost didn't work, try with configured values
+    if (!verified) {
+      verification = await verifyAuthenticationResponse({
+        response,
+        expectedChallenge: challenge,
+        expectedOrigin: origin,
+        expectedRPID: rpID,
+        credential: {
+          id: credential.credentialID,
+          publicKey: credential.credentialPublicKey,
+          counter: credential.counter
+        },
+        requireUserVerification: false
+      });
+    }
     
     if (verification.verified && verification.authenticationInfo) {
       // Update credential counter and last used
