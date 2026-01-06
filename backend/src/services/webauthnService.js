@@ -57,13 +57,28 @@ export async function verifyRegistration(userId, response, challenge, deviceName
     const existingCredentials = user.credentials || [];
     
     // Verify the registration response
-    const verification = await verifyRegistrationResponse({
-      response,
-      expectedChallenge: challenge,
-      expectedOrigin: origin,
-      expectedRPID: rpID,
-      requireUserVerification: false
-    });
+    // For Electron clients, rpId might be 'localhost' instead of the configured rpID
+    // Try with localhost first (for Electron), then fall back to configured rpID
+    let verification;
+    try {
+      verification = await verifyRegistrationResponse({
+        response,
+        expectedChallenge: challenge,
+        expectedOrigin: origin,
+        expectedRPID: 'localhost', // Try localhost first for Electron compatibility
+        requireUserVerification: false
+      });
+    } catch (error) {
+      // If localhost fails, try with configured rpID
+      console.log('Verification with localhost failed, trying with configured rpID:', rpID);
+      verification = await verifyRegistrationResponse({
+        response,
+        expectedChallenge: challenge,
+        expectedOrigin: origin,
+        expectedRPID: rpID,
+        requireUserVerification: false
+      });
+    }
     
     if (verification.verified && verification.registrationInfo) {
       // Store new credential
