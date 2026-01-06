@@ -6,10 +6,20 @@ import { cleanupTestData, createTestDevice } from '../helpers.js';
 
 // Mock the auth middleware
 vi.mock('../../src/middleware/auth.js', () => ({
-  authenticateDevToken: (req, res, next) => {
+  authenticate: (req, res, next) => {
     // Set test user and device for all requests
     req.userId = 'test-user-123';
     req.deviceId = 'test-device-123';
+    next();
+  },
+  authenticateDevToken: (req, res, next) => {
+    req.userId = 'test-user-123';
+    req.deviceId = 'test-device-123';
+    next();
+  },
+  authenticateWebAuthn: (req, res, next) => {
+    req.userId = 'test-user-123';
+    req.email = 'test@example.com';
     next();
   },
 }));
