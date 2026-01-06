@@ -1,36 +1,314 @@
 import express from 'express';
+import { 
+  generateRegistrationChallenge, 
+  verifyRegistration,
+  generateAuthenticationChallenge,
+  verifyAuthentication 
+} from '../services/webauthnService.js';
+import { User } from '../models/User.js';
+import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from '../utils/jwt.js';
 
 const router = express.Router();
 
-// POST /api/auth/register - User registration (WebAuthn)
-// Placeholder for WebAuthn implementation
-router.post('/register', async (req, res) => {
+// POST /api/auth/register/start - Begin registration
+router.post('/register/start', async (req, res) => {
   try {
-    // TODO: Implement WebAuthn registration
-    // For MVP, return success with dev token info
-    res.json({
-      message: 'WebAuthn registration not yet implemented. Use dev-token for testing.',
-      devToken: process.env.DEV_TOKEN || 'dev-token-for-testing-change-in-production'
+    const { email, userName } = req.body;
+    
+    if (!email || !userName) {
+      return res.status(400).json({ 
+        success: false,
+        error: 'Email and userName are required' 
+      });
+    }
+    
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ 
+        success: false,
+        error: 'Invalid email format' 
+      });
+    }
+    
+    // Check if user exists, get existing credentials
+    let user = await User.findOne({ email });
+    const existingCredentials = user?.credentials || [];
+    
+    // Generate userId if new user
+    const userId = user?.userId || email; // Using email as userId for simplicity
+    
+    // Generate registration challenge
+    const options = await generateRegistrationChallenge(
+      userId,
+      userName,
+      existingCredentials
+    );
+    
+    res.json({ 
+      success: true,
+      options,
+      challenge: options.challenge 
     });
   } catch (error) {
-    console.error('Error in POST /api/auth/register:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error('Registration start error:', error);
+    res.status(500).json({ 
+      success: false,
+      error: 'Failed to start registration',
+      message: error.message 
+    });
   }
 });
 
-// POST /api/auth/login - User authentication (WebAuthn)
-// Placeholder for WebAuthn implementation
-router.post('/login', async (req, res) => {
+// POST /api/auth/register/complete - Complete registration
+router.post('/register/complete', async (req, res) => {
   try {
-    // TODO: Implement WebAuthn login
-    // For MVP, return success with dev token info
-    res.json({
-      message: 'WebAuthn login not yet implemented. Use dev-token for testing.',
-      devToken: process.env.DEV_TOKEN || 'dev-token-for-testing-change-in-production'
+    const { email, userName, response, challenge, deviceName, deviceType, platform } = req.body;
+    
+    if (!email || !userName || !response || !challenge) {
+      return res.status(400).json({ 
+        success: false,
+        error: 'Email, userName, response, and challenge are required' 
+      });
+    }
+    
+    // Find or create user
+    let user = await User.findOne({ email });
+    const userId = user?.userId || email;
+    
+    if (!user) {
+      user = new User({
+        userId,
+        email,
+        credentials: []
+      });
+    }
+    
+    // Verify registration
+    const result = await verifyRegistration(
+      userId, 
+      response, 
+      challenge,
+      deviceName,
+      deviceType,
+      platform
+    );
+    
+    if (result.verified) {
+      // Generate JWT tokens
+      const token = generateAccessToken(user.userId, user.email);
+      const refreshToken = generateRefreshToken(user.userId);
+      
+      // Store refresh token in user document (optional, for revocation)
+      user.refreshTokens.push({
+        token: refreshToken,
+        expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
+        createdAt: new Date()
+      });
+      await user.save();
+      
+      res.json({ 
+        success: true, 
+        token,
+        refreshToken,
+        user: { 
+          userId: user.userId, 
+          email: user.email,
+          credentialsCount: user.credentials.length
+        }
+      });
+    } else {
+      res.status(400).json({ 
+        success: false,
+        error: result.error || 'Registration verification failed' 
+      });
+    }
+  } catch (error) {
+    console.error('Registration complete error:', error);
+    res.status(500).json({ 
+      success: false,
+      error: 'Registration failed',
+      message: error.message 
+    });
+  }
+});
+
+// POST /api/auth/login/start - Begin authentication
+router.post('/login/start', async (req, res) => {
+  try {
+    const { email } = req.body;
+    
+    if (!email) {
+      return res.status(400).json({ 
+        success: false,
+        error: 'Email is required' 
+      });
+    }
+    
+    const user = await User.findOne({ email });
+    if (!user || !user.credentials || user.credentials.length === 0) {
+      return res.status(404).json({ 
+        success: false,
+        error: 'User not found or no credentials registered' 
+      });
+    }
+    
+    // Generate authentication challenge
+    const options = await generateAuthenticationChallenge(user.userId);
+    
+    res.json({ 
+      success: true,
+      options,
+      challenge: options.challenge 
     });
   } catch (error) {
-    console.error('Error in POST /api/auth/login:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error('Login start error:', error);
+    res.status(500).json({ 
+      success: false,
+      error: 'Failed to start login',
+      message: error.message 
+    });
+  }
+});
+
+// POST /api/auth/login/complete - Complete authentication
+router.post('/login/complete', async (req, res) => {
+  try {
+    const { email, response, challenge } = req.body;
+    
+    if (!email || !response || !challenge) {
+      return res.status(400).json({ 
+        success: false,
+        error: 'Email, response, and challenge are required' 
+      });
+    }
+    
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ 
+        success: false,
+        error: 'User not found' 
+      });
+    }
+    
+    // Verify authentication
+    const result = await verifyAuthentication(user.userId, response, challenge);
+    
+    if (result.verified) {
+      // Generate JWT tokens
+      const token = generateAccessToken(user.userId, user.email);
+      const refreshToken = generateRefreshToken(user.userId);
+      
+      // Store refresh token
+      user.refreshTokens.push({
+        token: refreshToken,
+        expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
+        createdAt: new Date()
+      });
+      await user.save();
+      
+      res.json({ 
+        success: true, 
+        token,
+        refreshToken,
+        user: { 
+          userId: user.userId, 
+          email: user.email,
+          credentialsCount: user.credentials.length
+        }
+      });
+    } else {
+      res.status(401).json({ 
+        success: false,
+        error: result.error || 'Authentication failed' 
+      });
+    }
+  } catch (error) {
+    console.error('Login complete error:', error);
+    res.status(500).json({ 
+      success: false,
+      error: 'Authentication failed',
+      message: error.message 
+    });
+  }
+});
+
+// POST /api/auth/logout - Logout (invalidate refresh token)
+router.post('/logout', async (req, res) => {
+  try {
+    const { refreshToken } = req.body;
+    
+    if (refreshToken) {
+      // Find and remove refresh token from user
+      const decoded = verifyRefreshToken(refreshToken);
+      const user = await User.findOne({ userId: decoded.userId });
+      
+      if (user) {
+        user.refreshTokens = user.refreshTokens.filter(
+          rt => rt.token !== refreshToken
+        );
+        await user.save();
+      }
+    }
+    
+    res.json({ 
+      success: true, 
+      message: 'Logged out successfully' 
+    });
+  } catch (error) {
+    console.error('Logout error:', error);
+    res.status(500).json({ 
+      success: false,
+      error: 'Logout failed' 
+    });
+  }
+});
+
+// POST /api/auth/refresh - Refresh access token
+router.post('/refresh', async (req, res) => {
+  try {
+    const { refreshToken } = req.body;
+    
+    if (!refreshToken) {
+      return res.status(400).json({ 
+        success: false,
+        error: 'Refresh token is required' 
+      });
+    }
+    
+    // Verify refresh token
+    const decoded = verifyRefreshToken(refreshToken);
+    
+    // Check if token exists in user's refresh tokens
+    const user = await User.findOne({ userId: decoded.userId });
+    if (!user) {
+      return res.status(404).json({ 
+        success: false,
+        error: 'User not found' 
+      });
+    }
+    
+    const tokenExists = user.refreshTokens.some(rt => rt.token === refreshToken);
+    if (!tokenExists) {
+      return res.status(401).json({ 
+        success: false,
+        error: 'Invalid refresh token' 
+      });
+    }
+    
+    // Generate new access token
+    const token = generateAccessToken(user.userId, user.email);
+    
+    res.json({ 
+      success: true,
+      token 
+    });
+  } catch (error) {
+    console.error('Refresh token error:', error);
+    res.status(401).json({ 
+      success: false,
+      error: 'Invalid or expired refresh token' 
+    });
   }
 });
 
