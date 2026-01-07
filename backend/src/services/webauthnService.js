@@ -33,8 +33,8 @@ export async function generateRegistrationChallenge(userId, userName, existingCr
       })),
       authenticatorSelection: {
         authenticatorAttachment: 'platform', // Prefer platform authenticators (Touch ID, Face ID, etc.)
-        userVerification: 'preferred',
-        requireResidentKey: false
+        userVerification: 'required',
+        residentKey: 'required'
       },
       supportedAlgorithmIDs: [-7, -257] // ES256, RS256
     });
@@ -60,47 +60,61 @@ export async function verifyRegistration(userId, response, challenge, deviceName
     const existingCredentials = user.credentials || [];
     
     // Verify the registration response
-    // For Electron clients, rpId is 'localhost' and origin is 'http://localhost:PORT'
-    // We need to accept any localhost origin (since the port is random)
-    // Try with localhost first, then fall back to configured values
+    // For browser-based auth, try multiple origin/rpID combinations
+    console.log('Verifying registration with:', {
+      rpID,
+      origin,
+      challengeLength: challenge?.length
+    });
+    
+    // Try different origin/rpID combinations
+    const verificationAttempts = [
+      { origin: origin, rpID: rpID, name: 'configured values' },
+      { origin: 'http://localhost:3000', rpID: 'localhost', name: 'localhost:3000' },
+      { origin: 'http://localhost', rpID: 'localhost', name: 'localhost' },
+    ];
+    
     let verification;
     let lastError;
     
-    // First, try with localhost (for Electron)
-    try {
-      verification = await verifyRegistrationResponse({
-        response,
-        expectedChallenge: challenge,
-        expectedOrigin: 'http://localhost', // Accept any localhost origin
-        expectedRPID: 'localhost',
-        requireUserVerification: false
-      });
-      console.log('Verification successful with localhost');
-    } catch (error) {
-      lastError = error;
-      console.log('Verification with localhost failed, trying with configured values:', error.message);
-      
-      // Fall back to configured values (for web clients)
+    for (const attempt of verificationAttempts) {
       try {
+        console.log(`Trying verification with ${attempt.name}...`);
         verification = await verifyRegistrationResponse({
           response,
           expectedChallenge: challenge,
-          expectedOrigin: origin,
-          expectedRPID: rpID,
+          expectedOrigin: attempt.origin,
+          expectedRPID: attempt.rpID,
           requireUserVerification: false
         });
-        console.log('Verification successful with configured values');
-      } catch (error2) {
-        lastError = error2;
-        throw new Error(`Verification failed: ${error2.message}`);
+        console.log(`Verification successful with ${attempt.name}`);
+        break;
+      } catch (error) {
+        lastError = error;
+        console.log(`Verification failed with ${attempt.name}:`, error.message);
+        continue;
       }
+    }
+    
+    if (!verification) {
+      console.error('All verification attempts failed. Last error:', lastError);
+      throw new Error(`Verification failed: ${lastError?.message || 'Unknown error'}`);
     }
     
     if (verification.verified && verification.registrationInfo) {
       // Store new credential
+      // credentialID and credentialPublicKey might already be Buffers
+      const credentialID = Buffer.isBuffer(verification.registrationInfo.credentialID) 
+        ? verification.registrationInfo.credentialID 
+        : Buffer.from(verification.registrationInfo.credentialID);
+      
+      const credentialPublicKey = Buffer.isBuffer(verification.registrationInfo.credentialPublicKey)
+        ? verification.registrationInfo.credentialPublicKey
+        : Buffer.from(verification.registrationInfo.credentialPublicKey);
+      
       const newCredential = {
-        credentialID: Buffer.from(verification.registrationInfo.credentialID),
-        credentialPublicKey: Buffer.from(verification.registrationInfo.credentialPublicKey),
+        credentialID: credentialID,
+        credentialPublicKey: credentialPublicKey,
         counter: verification.registrationInfo.counter || 0,
         deviceName: deviceName || 'Unknown Device',
         deviceType: deviceType || 'desktop',

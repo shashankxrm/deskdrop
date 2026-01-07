@@ -76,7 +76,7 @@ router.post('/register/complete', async (req, res) => {
       });
     }
     
-    // Find or create user
+    // Find or create user FIRST (before verification)
     let user = await User.findOne({ email });
     const userId = user?.userId || email;
     
@@ -84,11 +84,21 @@ router.post('/register/complete', async (req, res) => {
       user = new User({
         userId,
         email,
-        credentials: []
+        userName: userName, // Store userName
+        credentials: [],
+        refreshTokens: []
       });
+      await user.save(); // Save user before verification
+      console.log('User created:', userId, email);
+    } else {
+      // Update userName if provided
+      if (userName && user.userName !== userName) {
+        user.userName = userName;
+        await user.save();
+      }
     }
     
-    // Verify registration
+    // Verify registration (user must exist)
     const result = await verifyRegistration(
       userId, 
       response, 
@@ -99,11 +109,17 @@ router.post('/register/complete', async (req, res) => {
     );
     
     if (result.verified) {
+      // Reload user to get updated credentials
+      user = await User.findOne({ userId });
+      
       // Generate JWT tokens
       const token = generateAccessToken(user.userId, user.email);
       const refreshToken = generateRefreshToken(user.userId);
       
       // Store refresh token in user document (optional, for revocation)
+      if (!user.refreshTokens) {
+        user.refreshTokens = [];
+      }
       user.refreshTokens.push({
         token: refreshToken,
         expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
@@ -129,10 +145,13 @@ router.post('/register/complete', async (req, res) => {
     }
   } catch (error) {
     console.error('Registration complete error:', error);
+    console.error('Error stack:', error.stack);
+    console.error('Error name:', error.name);
     res.status(500).json({ 
       success: false,
       error: 'Registration failed',
-      message: error.message 
+      message: error.message,
+      details: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
   }
 });

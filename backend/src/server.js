@@ -4,8 +4,13 @@ import dotenv from 'dotenv';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
 import mongoose from 'mongoose';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
 import { connectRedis } from './services/redisService.js';
 import { setupSocketIO } from './socket/socketHandler.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 // Import routes
 import linksRouter from './routes/links.js';
@@ -36,6 +41,14 @@ setupSocketIO(io);
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Serve static files (for web auth page)
+app.use(express.static(join(__dirname, '../public')));
+
+// Serve auth page at root
+app.get('/', (req, res) => {
+  res.sendFile(join(__dirname, '../public/auth.html'));
+});
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

@@ -14,14 +14,13 @@ export const setupSocketService = async (callbacks) => {
   };
 
   // Try to load pairing token from config file or environment
-  // Wait for Electron app to be ready
   await loadPairingTokenFromConfig();
   
   console.log('Final config - serverUrl:', config.serverUrl);
   console.log('Final config - pairingToken:', config.pairingToken ? '***' + config.pairingToken.slice(-4) : 'NOT SET');
 
   if (!config.pairingToken) {
-    console.error('Pairing token not found. Please set PAIRING_TOKEN environment variable or create config file.');
+    console.error('Pairing token not found. Please get a pairing token from the web auth page.');
     if (config.onConnectionStatusChange) {
       config.onConnectionStatusChange('disconnected', 'No pairing token');
     }
@@ -88,6 +87,7 @@ async function loadPairingTokenFromConfig() {
     console.log('Using BACKEND_URL from environment:', config.serverUrl);
   }
 }
+
 
 function connect() {
   if (socket?.connected) {

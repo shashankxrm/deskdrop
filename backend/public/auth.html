@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DeskDrop - Authentication</title>
+  <script src="https://unpkg.com/@simplewebauthn/browser@8.3.7/dist/bundle/index.umd.min.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    
+    .container {
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      padding: 40px;
+      width: 100%;
+      max-width: 450px;
+    }
+    
+    h1 {
+      color: #333;
+      margin-bottom: 10px;
+      font-size: 28px;
+      text-align: center;
+    }
+    
+    .subtitle {
+      color: #666;
+      margin-bottom: 30px;
+      font-size: 14px;
+      text-align: center;
+    }
+    
+    .form-group {
+      margin-bottom: 20px;
+    }
+    
+    label {
+      display: block;
+      margin-bottom: 8px;
+      color: #333;
+      font-size: 14px;
+      font-weight: 500;
+    }
+    
+    input {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 14px;
+      transition: border-color 0.2s;
+    }
+    
+    input:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+    
+    button {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      margin-top: 10px;
+    }
+    
+    button:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+    
+    button:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+      transform: none;
+    }
+    
+    .error {
+      background: #fee;
+      color: #c33;
+      font-size: 13px;
+      margin-top: 12px;
+      padding: 12px;
+      border-radius: 8px;
+      display: none;
+      border: 1px solid #fcc;
+    }
+    
+    .error.show {
+      display: block;
+    }
+    
+    .success {
+      background: #efe;
+      color: #3c3;
+      font-size: 13px;
+      margin-top: 12px;
+      padding: 12px;
+      border-radius: 8px;
+      display: none;
+      border: 1px solid #cfc;
+    }
+    
+    .success.show {
+      display: block;
+    }
+    
+    .loading {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid #fff;
+      border-top-color: transparent;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+      margin-right: 8px;
+      vertical-align: middle;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    .mode-switch {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 13px;
+      color: #666;
+    }
+    
+    .mode-switch a {
+      color: #667eea;
+      cursor: pointer;
+      text-decoration: none;
+      font-weight: 500;
+    }
+    
+    .mode-switch a:hover {
+      text-decoration: underline;
+    }
+    
+    .token-display {
+      background: #f5f5f5;
+      border: 2px solid #667eea;
+      border-radius: 8px;
+      padding: 16px;
+      margin-top: 20px;
+      display: none;
+    }
+    
+    .token-display.show {
+      display: block;
+    }
+    
+    .token-display h3 {
+      font-size: 14px;
+      color: #333;
+      margin-bottom: 8px;
+    }
+    
+    .token-value {
+      font-family: 'Monaco', 'Courier New', monospace;
+      font-size: 12px;
+      color: #667eea;
+      word-break: break-all;
+      background: white;
+      padding: 8px;
+      border-radius: 4px;
+      margin-bottom: 12px;
+    }
+    
+    .copy-btn {
+      background: #667eea;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 12px;
+      margin-top: 8px;
+    }
+    
+    .copy-btn:hover {
+      background: #5568d3;
+    }
+    
+    .instructions {
+      background: #e3f2fd;
+      border-left: 4px solid #2196f3;
+      padding: 12px;
+      margin-top: 20px;
+      border-radius: 4px;
+      font-size: 13px;
+      color: #1565c0;
+    }
+    
+    .instructions ol {
+      margin-left: 20px;
+      margin-top: 8px;
+    }
+    
+    .instructions li {
+      margin-bottom: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Registration Form -->
+    <div id="registerForm">
+      <h1>Create Account</h1>
+      <p class="subtitle">Register with a passkey for secure access</p>
+      
+      <form id="registerFormElement">
+        <div class="form-group">
+          <label for="regEmail">Email</label>
+          <input type="email" id="regEmail" required placeholder="your@email.com">
+        </div>
+        
+        <div class="form-group">
+          <label for="regUserName">Name</label>
+          <input type="text" id="regUserName" required placeholder="Your Name">
+        </div>
+        
+        <div class="form-group">
+          <label for="regDeviceName">Device Name</label>
+          <input type="text" id="regDeviceName" required placeholder="e.g., MacBook Pro - Office">
+        </div>
+        
+        <button type="submit" id="registerBtn">
+          <span id="registerBtnText">Create Passkey</span>
+        </button>
+        
+        <div class="error" id="registerError"></div>
+        <div class="success" id="registerSuccess"></div>
+        
+        <div class="token-display" id="registerTokenDisplay">
+          <h3>Desktop App Pairing Token</h3>
+          <div class="token-value" id="registerTokenValue"></div>
+          <button type="button" class="copy-btn" onclick="copyToken('registerTokenValue')">Copy Token</button>
+          <div class="instructions">
+            <strong>Next Steps:</strong>
+            <ol>
+              <li>Copy the pairing token above</li>
+              <li>Open your Desktop app</li>
+              <li>Paste the token when prompted</li>
+              <li>Your desktop app will now be connected!</li>
+            </ol>
+          </div>
+        </div>
+      </form>
+      
+      <div class="mode-switch">
+        Already have an account? <a id="showLogin">Sign in</a>
+      </div>
+    </div>
+    
+    <!-- Login Form -->
+    <div id="loginForm" style="display: none;">
+      <h1>Sign In</h1>
+      <p class="subtitle">Authenticate with your passkey</p>
+      
+      <form id="loginFormElement">
+        <div class="form-group">
+          <label for="loginEmail">Email</label>
+          <input type="email" id="loginEmail" required placeholder="your@email.com">
+        </div>
+        
+        <button type="submit" id="loginBtn">
+          <span id="loginBtnText">Sign In with Passkey</span>
+        </button>
+        
+        <div class="error" id="loginError"></div>
+        <div class="success" id="loginSuccess"></div>
+        
+        <div class="token-display" id="loginTokenDisplay">
+          <h3>Desktop App Pairing Token</h3>
+          <div class="token-value" id="loginTokenValue"></div>
+          <button type="button" class="copy-btn" onclick="copyToken('loginTokenValue')">Copy Token</button>
+          <div class="instructions">
+            <strong>Next Steps:</strong>
+            <ol>
+              <li>Copy the pairing token above</li>
+              <li>Open your Desktop app</li>
+              <li>Paste the token when prompted</li>
+              <li>Your desktop app will now be connected!</li>
+            </ol>
+          </div>
+        </div>
+      </form>
+      
+      <div class="mode-switch">
+        Don't have an account? <a id="showRegister">Create one</a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const { startRegistration, startAuthentication } = SimpleWebAuthnBrowser;
+    
+    // Get backend URL from current origin
+    // If page is served from backend, use current origin
+    const backendUrl = window.location.origin;
+    const apiUrl = `${backendUrl}/api`;
+    
+    console.log('Backend API URL:', apiUrl);
+    console.log('Current origin:', window.location.origin);
+    
+    // Form elements
+    const registerForm = document.getElementById('registerForm');
+    const loginForm = document.getElementById('loginForm');
+    const registerFormElement = document.getElementById('registerFormElement');
+    const loginFormElement = document.getElementById('loginFormElement');
+    
+    // Show/hide forms
+    document.getElementById('showLogin').addEventListener('click', () => {
+      registerForm.style.display = 'none';
+      loginForm.style.display = 'block';
+    });
+    
+    document.getElementById('showRegister').addEventListener('click', () => {
+      loginForm.style.display = 'none';
+      registerForm.style.display = 'block';
+    });
+    
+    // Copy token function
+    function copyToken(elementId) {
+      const tokenElement = document.getElementById(elementId);
+      const token = tokenElement.textContent;
+      navigator.clipboard.writeText(token).then(() => {
+        alert('Token copied to clipboard!');
+      }).catch(err => {
+        console.error('Failed to copy:', err);
+        // Fallback: select text
+        tokenElement.select();
+        document.execCommand('copy');
+        alert('Token copied!');
+      });
+    }
+    
+    // Registration
+    registerFormElement.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const email = document.getElementById('regEmail').value;
+      const userName = document.getElementById('regUserName').value;
+      const deviceName = document.getElementById('regDeviceName').value;
+      const registerBtn = document.getElementById('registerBtn');
+      const registerBtnText = document.getElementById('registerBtnText');
+      const errorDiv = document.getElementById('registerError');
+      const successDiv = document.getElementById('registerSuccess');
+      const tokenDisplay = document.getElementById('registerTokenDisplay');
+      const tokenValue = document.getElementById('registerTokenValue');
+      
+      registerBtn.disabled = true;
+      registerBtnText.innerHTML = '<span class="loading"></span>Creating passkey...';
+      errorDiv.classList.remove('show');
+      successDiv.classList.remove('show');
+      tokenDisplay.classList.remove('show');
+      
+      try {
+        // Step 1: Get registration options from backend
+        const startResponse = await fetch(`${apiUrl}/auth/register/start`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, userName })
+        });
+        
+        if (!startResponse.ok) {
+          const error = await startResponse.json();
+          throw new Error(error.error || 'Failed to start registration');
+        }
+        
+        const { options, challenge } = await startResponse.json();
+        console.log('Registration options received');
+        
+        // Step 2: Create passkey
+        registerBtnText.innerHTML = '<span class="loading"></span>Creating passkey...';
+        const credential = await startRegistration(options);
+        console.log('Passkey created successfully');
+        
+        // Step 3: Complete registration
+        registerBtnText.innerHTML = '<span class="loading"></span>Completing registration...';
+        const completeResponse = await fetch(`${apiUrl}/auth/register/complete`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email,
+            userName,
+            response: credential,
+            challenge,
+            deviceName: deviceName || 'Desktop Device',
+            deviceType: 'desktop',
+            platform: navigator.platform.includes('Mac') ? 'macos' : 
+                      navigator.platform.includes('Win') ? 'windows' : 'linux'
+          })
+        });
+        
+        if (!completeResponse.ok) {
+          const error = await completeResponse.json();
+          throw new Error(error.error || 'Registration failed');
+        }
+        
+        const result = await completeResponse.json();
+        
+        if (result.success) {
+          // Step 4: Generate pairing token for desktop app
+          registerBtnText.innerHTML = '<span class="loading"></span>Generating pairing token...';
+          
+          const tokenResponse = await fetch(`${apiUrl}/devices/generate-pairing-token`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${result.token}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ deviceName: deviceName || 'Desktop Device' })
+          });
+          
+          if (!tokenResponse.ok) {
+            throw new Error('Failed to generate pairing token');
+          }
+          
+          const tokenResult = await tokenResponse.json();
+          
+          // Show success and token
+          successDiv.textContent = 'Registration successful!';
+          successDiv.classList.add('show');
+          
+          tokenValue.textContent = tokenResult.pairingToken;
+          tokenDisplay.classList.add('show');
+          
+          registerBtn.disabled = false;
+          registerBtnText.textContent = 'Create Passkey';
+        }
+      } catch (error) {
+        console.error('Registration error:', error);
+        errorDiv.textContent = error.message || 'Registration failed';
+        errorDiv.classList.add('show');
+        registerBtn.disabled = false;
+        registerBtnText.textContent = 'Create Passkey';
+      }
+    });
+    
+    // Login
+    loginFormElement.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const email = document.getElementById('loginEmail').value;
+      const loginBtn = document.getElementById('loginBtn');
+      const loginBtnText = document.getElementById('loginBtnText');
+      const errorDiv = document.getElementById('loginError');
+      const successDiv = document.getElementById('loginSuccess');
+      const tokenDisplay = document.getElementById('loginTokenDisplay');
+      const tokenValue = document.getElementById('loginTokenValue');
+      
+      loginBtn.disabled = true;
+      loginBtnText.innerHTML = '<span class="loading"></span>Authenticating...';
+      errorDiv.classList.remove('show');
+      successDiv.classList.remove('show');
+      tokenDisplay.classList.remove('show');
+      
+      try {
+        // Step 1: Get authentication options from backend
+        const startResponse = await fetch(`${apiUrl}/auth/login/start`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email })
+        });
+        
+        if (!startResponse.ok) {
+          const error = await startResponse.json();
+          throw new Error(error.error || 'Failed to start login');
+        }
+        
+        const { options, challenge } = await startResponse.json();
+        
+        // Step 2: Authenticate with passkey
+        loginBtnText.innerHTML = '<span class="loading"></span>Authenticating with passkey...';
+        const credential = await startAuthentication(options);
+        
+        // Step 3: Complete authentication
+        loginBtnText.innerHTML = '<span class="loading"></span>Completing authentication...';
+        const completeResponse = await fetch(`${apiUrl}/auth/login/complete`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email,
+            response: credential,
+            challenge
+          })
+        });
+        
+        if (!completeResponse.ok) {
+          const error = await completeResponse.json();
+          throw new Error(error.error || 'Authentication failed');
+        }
+        
+        const result = await completeResponse.json();
+        
+        if (result.success) {
+          // Step 4: Generate pairing token for desktop app
+          loginBtnText.innerHTML = '<span class="loading"></span>Generating pairing token...';
+          
+          const tokenResponse = await fetch(`${apiUrl}/devices/generate-pairing-token`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${result.token}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ deviceName: 'Desktop Device' })
+          });
+          
+          if (!tokenResponse.ok) {
+            throw new Error('Failed to generate pairing token');
+          }
+          
+          const tokenResult = await tokenResponse.json();
+          
+          // Show success and token
+          successDiv.textContent = 'Authentication successful!';
+          successDiv.classList.add('show');
+          
+          tokenValue.textContent = tokenResult.pairingToken;
+          tokenDisplay.classList.add('show');
+          
+          loginBtn.disabled = false;
+          loginBtnText.textContent = 'Sign In with Passkey';
+        }
+      } catch (error) {
+        console.error('Login error:', error);
+        errorDiv.textContent = error.message || 'Authentication failed';
+        errorDiv.classList.add('show');
+        loginBtn.disabled = false;
+        loginBtnText.textContent = 'Sign In with Passkey';
+      }
+    });
+  </script>
+</body>
+</html>
+
