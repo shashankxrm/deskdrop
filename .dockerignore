@@ -1,0 +1,9 @@
+.git
+.cursor
+.env
+docs
+*.md
+android
+dashboard
+infra
+**/*_test.go

@@ -22,4 +22,7 @@ Go API, PostgreSQL, Next.js dashboard, Kotlin Android client, Go macOS tray agen
 
 - [Architecture](docs/architecture.md)
 - [v1 retrospective](docs/v1-retrospective.md) (why the first version never worked end to end)
+- [Database schema](docs/components/database-schema.md)
 - [Oracle / Terraform (A0 pending)](docs/components/terraform.md)
+
+Local API is a `/healthz` placeholder. Postgres schema is created by Compose (see the schema doc). Not a public service yet.

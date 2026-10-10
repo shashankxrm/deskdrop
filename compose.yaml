@@ -1,0 +1,3 @@
+# Default Compose file so `docker compose up` works from the repo root.
+include:
+  - path: deploy/compose/compose.yaml

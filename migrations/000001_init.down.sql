@@ -1,0 +1,5 @@
+DROP TABLE IF EXISTS link_deliveries;
+DROP TABLE IF EXISTS links;
+DROP TABLE IF EXISTS pairing_codes;
+DROP TABLE IF EXISTS devices;
+DROP TABLE IF EXISTS users;

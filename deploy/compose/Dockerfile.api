@@ -1,0 +1,12 @@
+FROM golang:1.23-alpine
+
+RUN apk add --no-cache wget
+
+WORKDIR /src
+COPY go.mod ./
+COPY cmd/api ./cmd/api
+RUN go build -o /usr/local/bin/api ./cmd/api
+
+EXPOSE 8080
+USER nobody
+CMD ["api"]
