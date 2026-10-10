@@ -4,7 +4,7 @@ Share a link from Android and have it open in your laptop browser the next time 
 
 v2 is a rebuild: phone and laptop are devices under one pairing chain, links sit in Postgres until the laptop pulls and acks them, and nothing is deleted on the way.
 
-**Not production yet.** There is no public HTTPS URL, no APK, and no laptop agent download. The Go API on this `v2` branch does pairing through history, account delete, 30-day retention, CORS, and per-pod write limits, with a compose HTTP E2E (`tests/e2e/compose_api.sh`). Android, macOS agent, dashboard, and hosting are later steps.
+**Not production yet.** There is no public HTTPS URL and no laptop agent download. The Go API on this `v2` branch does pairing through history, account delete, 30-day retention, CORS, and per-pod write limits, with a compose HTTP E2E (`tests/e2e/compose_api.sh`). Android pairing (C1) lives in `android/` (`./gradlew test`, LAN claim against Compose). Share target, macOS agent, dashboard, and hosting are later steps.
 
 ## Features (when v2 is live)
 
@@ -29,5 +29,6 @@ Go API, PostgreSQL, Next.js dashboard, Kotlin Android client, Go macOS tray agen
 - [Pairing](docs/components/pairing.md) / [Auth](docs/components/auth.md)
 - [Delivery, history, retention](docs/components/delivery.md)
 - [CORS and rate limits](docs/components/rate-limiter.md)
+- [Android pairing](docs/components/android.md)
 
-Local API: `docker compose up --build -d` then `/healthz`, `/readyz`, `/metrics`. HTTP E2E: `tests/e2e/compose_api.sh`. Demos: [pairing.md](docs/components/pairing.md), [delivery.md](docs/components/delivery.md), [rate-limiter.md](docs/components/rate-limiter.md). Suites: [testing.md](docs/components/testing.md).
+Local API: `docker compose up --build -d` then `/healthz`, `/readyz`, `/metrics`. HTTP E2E: `tests/e2e/compose_api.sh`. Android: [android.md](docs/components/android.md). Demos: [pairing.md](docs/components/pairing.md), [delivery.md](docs/components/delivery.md), [rate-limiter.md](docs/components/rate-limiter.md). Suites: [testing.md](docs/components/testing.md).

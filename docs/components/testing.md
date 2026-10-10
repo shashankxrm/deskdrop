@@ -58,3 +58,14 @@ tests/e2e/compose_api.sh
 ```
 
 Needs Docker, `curl`, `python3`, and `psql` via `docker compose exec`. Trace and failure modes: [follow-one-link.md](../follow-one-link.md), [what-breaks-if.md](../what-breaks-if.md).
+
+## Android (C1)
+
+JUnit 4 on the JVM (no device required). Full-jitter backoff, retry table, pairing-code normalize. Gradle is not in GitHub Actions until D1.
+
+```bash
+echo "sdk.dir=$HOME/Library/Android/sdk" > android/local.properties
+cd android && ./gradlew test
+```
+
+LAN pair demo: [android.md](android.md).

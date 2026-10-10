@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">deskdrop</string>
+    <string name="api_url_hint">http://192.168.0.10:8080</string>
+    <string name="api_url_label">API base URL</string>
+    <string name="code_hint">ABCD-EFGH</string>
+    <string name="code_label">Pairing code</string>
+    <string name="paste">Paste</string>
+    <string name="scan_qr">Scan QR</string>
+    <string name="pair">Pair as phone</string>
+    <string name="unpair">Forget this device</string>
+    <string name="paired">Paired. Token is on-device only.</string>
+    <string name="need_url">Set the API URL (your computer\'s LAN address, port 8080).</string>
+    <string name="need_code">Paste or scan a pairing code.</string>
+</resources>

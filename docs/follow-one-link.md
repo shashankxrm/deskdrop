@@ -1,12 +1,12 @@
 # Follow one link
 
-API-only pass (B7). Android / agent / dashboard hops are still C1–C4. Same-origin HTTPS is D0.
+Updated C1 (Android can claim a pairing code). Share target is C2; agent C3; dashboard C4; HTTPS D0.
 
 Handlers live in `internal/httpserver`. Tables are migration `000001_init`. Every JSON response (and `/healthz`) carries `X-Request-Id`; JSON logs use field `request_id`. Counters: `deskdrop_pairings_total`, `deskdrop_shares_total`, `deskdrop_pulls_total`, `deskdrop_acks_total`. Latency histogram: `deskdrop_http_request_duration_seconds{method,code,route}`.
 
 Automated trace: `tests/e2e/compose_api.sh` (compose must be up). Pull vs push: [ADR 0007](adr/0007-pull-vs-push.md).
 
-0. **Pair.** `POST /v1/pairings` (`createPairing`) inserts `users` (bootstrap) + `pairing_codes`. `POST /v1/pairings/claim` (`claimPairing`) writes `devices.token_hash` (HMAC) and increments `deskdrop_pairings_total`. Extra laptop: authenticated create + claim. [pairing.md](components/pairing.md), [auth.md](components/auth.md).
+0. **Pair.** `POST /v1/pairings` (`createPairing`) inserts `users` (bootstrap) + `pairing_codes`. Phone app (C1) or curl `POST /v1/pairings/claim` (`claimPairing`) writes `devices.token_hash` (HMAC) and increments `deskdrop_pairings_total`. Token on the phone: EncryptedSharedPreferences, never APK strings. Extra laptop: authenticated create + claim. [pairing.md](components/pairing.md), [android.md](components/android.md).
 1. **Share.** Android (C2) or curl `POST /v1/links` (`shareLink`) with `Idempotency-Key`. Body `userId` ignored. `links` + `link_deliveries` in one transaction. New share → 201 and `deskdrop_shares_total`. Replay → 200, same `id`, no second row. [delivery.md](components/delivery.md).
 2. **Queue.** Rows in Postgres, not Redis. Fan-out only to laptops already paired ([ADR 0004](adr/0004-at-least-once-ack.md)).
 3. **Pull.** Laptop `GET /v1/links/pending` (`pendingLinks`) uses `link_deliveries_pending_by_device_idx`. Increments `deskdrop_pulls_total`. Phone/web 403. Pull does **not** ack — a second pull still returns the same row (sleep-mid-ack).
