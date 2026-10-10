@@ -18,6 +18,7 @@ Locally, Docker Compose runs Postgres 16, golang-migrate, and the Go API (`/heal
 | macOS agent | poll, open browser, ack | not started (C3) |
 | Next.js dashboard | pair, devices, history, delete account | not started (C4) |
 | Oracle VM | public HTTPS later | A0 pending |
+| CI | `go vet` + `go test ./...` on push/PR to `v2` | B1b ([ci-cd.md](components/ci-cd.md)) |
 
 Queue choice: [ADR 0001 — Postgres as the delivery queue](adr/0001-postgres-as-queue.md).
 
@@ -45,3 +46,4 @@ sequenceDiagram
 - Schema: [database-schema.md](components/database-schema.md)
 - API: [api.md](components/api.md) (`go test ./...`, `curl /readyz`, `/metrics`)
 - Suites: [testing.md](components/testing.md)
+- CI: [ci-cd.md](components/ci-cd.md) (job `go-test`)

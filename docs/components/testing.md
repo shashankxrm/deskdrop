@@ -19,7 +19,9 @@ Standard library `testing`, table-driven config tests, `httptest` for handlers, 
 go test ./...
 ```
 
-Docker must be running for `TestReadyz_ok`. CI (B1b) will run the same command with Docker.
+Docker must be running for `TestReadyz_ok`.
+
+CI job **go-test** (B1b) runs `go vet ./...` and `go test ./...` on every push/PR to `v2`. See [ci-cd.md](ci-cd.md).
 
 `github.com/stretchr/testify` may appear as an **indirect** module of testcontainers-go. Our tests must not import it.
 
