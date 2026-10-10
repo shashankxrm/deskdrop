@@ -9,4 +9,4 @@ Updated A2 (tables exist; handlers do not). Rewrite this whenever a component jo
 5. Agent `POST /v1/links/{id}/ack` — column `link_deliveries.acked_at` (A2); handler B4
 6. Retention job deletes delivered rows after 30 days (B5)
 
-Until B4, the only live hop is schema + `/healthz`. Demo commands: [database-schema.md](components/database-schema.md).
+Until B4, live hops are schema + `/healthz` `/readyz` and the latency histogram. Every HTTP hop logs `request_id`. Demo: [database-schema.md](components/database-schema.md), [api.md](components/api.md).

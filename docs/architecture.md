@@ -6,13 +6,13 @@ Updated A2. Update this file whenever a component joins the flow.
 
 deskdrop queues a URL from an Android share until a paired laptop agent pulls it, opens the default browser, and acks. One user is one pairing chain. Production target is a single Always Free Oracle VM (A0 **pending**).
 
-Locally, Docker Compose runs Postgres 16, golang-migrate, and a `/healthz` API placeholder.
+Locally, Docker Compose runs Postgres 16, golang-migrate, and the Go API (`/healthz`, `/readyz`, `/metrics`).
 
 ## Components
 
 | Piece | Role | Status |
 |---|---|---|
-| Go API | REST later; `/healthz` placeholder now | A2 placeholder (B1 replaces it) |
+| Go API | env config, slog + request IDs, `/healthz` `/readyz` `/metrics` histogram | B1 ([api.md](components/api.md)) |
 | PostgreSQL | users, devices, pairing_codes, links, link_deliveries | A2 — schema in [database-schema.md](components/database-schema.md) |
 | Android client | pair + share target | not started (C1–C2) |
 | macOS agent | poll, open browser, ack | not started (C3) |
@@ -42,4 +42,6 @@ sequenceDiagram
 
 ## Verify
 
-Commands live in [database-schema.md](components/database-schema.md): `docker compose up --build -d`, `curl /healthz`, `psql \dt`, migrate down/up twice.
+- Schema: [database-schema.md](components/database-schema.md)
+- API: [api.md](components/api.md) (`go test ./...`, `curl /readyz`, `/metrics`)
+- Suites: [testing.md](components/testing.md)
