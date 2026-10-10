@@ -1,0 +1,58 @@
+# Secrets and local env (keep .env.example)
+.env
+.env.*
+!.env.example
+
+# Terraform state and plugins (remote backend in D3; never commit state)
+*.tfstate
+*.tfstate.*
+*.tfstate.backup
+.terraform/
+.terraform.lock.hcl
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Binaries and build output
+bin/
+dist/
+build/
+out/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+coverage/
+coverage.txt
+*.coverprofile
+
+# Node / Next.js (dashboard, later)
+node_modules/
+.next/
+.turbo/
+
+# Android / Java
+*.apk
+*.aab
+*.ap_
+*.dex
+local.properties
+.gradle/
+*.iml
+.idea/
+
+# macOS agent / Xcode leftovers
+*.dSYM/
+*.app
+
+# OS / editor
+.DS_Store
+Thumbs.db
+*.swp
+*~
