@@ -1,13 +1,50 @@
 # Follow one link
 
-Updated B6 (CORS, write rate limits, security headers).
+API-only pass (B7). Android / agent / dashboard hops are still C1–C4. Same-origin HTTPS is D0.
 
-0. Phone or laptop `POST /v1/pairings` then `POST /v1/pairings/claim` — HMAC in `pairing_codes` / `devices`, counter `deskdrop_pairings_total` ([pairing.md](components/pairing.md)). Later hops use Bearer or the web cookie ([auth.md](components/auth.md)).
-1. Android share sheet → API `POST /v1/links` with `Idempotency-Key` — handler B4 ([delivery.md](components/delivery.md)); client C2
-2. API inserts `links` + `link_deliveries` in Postgres — tables from migration `000001_init` (A2); fan-out only to laptops already paired ([ADR 0004](adr/0004-at-least-once-ack.md))
-3. Laptop agent `GET /v1/links/pending` — partial index `link_deliveries_pending_by_device_idx` (A2); handler B4
-4. Agent opens the default browser (C3)
-5. Agent `POST /v1/links/{id}/ack` — column `link_deliveries.acked_at` (A2); handler B4, idempotent 204
-6. Hourly `purgeDelivered` in the API process deletes acked deliveries and fully delivered links older than 30 days ([ADR 0005](adr/0005-cursor-history-ttl.md)). Dashboard history is `GET /v1/links`. `DELETE /v1/account` drops the pairing chain.
+Handlers live in `internal/httpserver`. Tables are migration `000001_init`. Every JSON response (and `/healthz`) carries `X-Request-Id`; JSON logs use field `request_id`. Counters: `deskdrop_pairings_total`, `deskdrop_shares_total`, `deskdrop_pulls_total`, `deskdrop_acks_total`. Latency histogram: `deskdrop_http_request_duration_seconds{method,code,route}`.
 
-Live today: schema, health/ready/metrics, pairing, auth, share/pull/ack, history, account delete, retention. Demo: [delivery.md](components/delivery.md).
+Automated trace: `tests/e2e/compose_api.sh` (compose must be up). Pull vs push: [ADR 0007](adr/0007-pull-vs-push.md).
+
+0. **Pair.** `POST /v1/pairings` (`createPairing`) inserts `users` (bootstrap) + `pairing_codes`. `POST /v1/pairings/claim` (`claimPairing`) writes `devices.token_hash` (HMAC) and increments `deskdrop_pairings_total`. Extra laptop: authenticated create + claim. [pairing.md](components/pairing.md), [auth.md](components/auth.md).
+1. **Share.** Android (C2) or curl `POST /v1/links` (`shareLink`) with `Idempotency-Key`. Body `userId` ignored. `links` + `link_deliveries` in one transaction. New share → 201 and `deskdrop_shares_total`. Replay → 200, same `id`, no second row. [delivery.md](components/delivery.md).
+2. **Queue.** Rows in Postgres, not Redis. Fan-out only to laptops already paired ([ADR 0004](adr/0004-at-least-once-ack.md)).
+3. **Pull.** Laptop `GET /v1/links/pending` (`pendingLinks`) uses `link_deliveries_pending_by_device_idx`. Increments `deskdrop_pulls_total`. Phone/web 403. Pull does **not** ack — a second pull still returns the same row (sleep-mid-ack).
+4. **Open.** Agent opens the default browser (C3). Not in this pass.
+5. **Ack.** `POST /v1/links/{id}/ack` (`ackLink`) sets `link_deliveries.acked_at` once. Repeat is 204. Increments `deskdrop_acks_total` including repeats. Still one delivery row.
+6. **Cleanup.** Hourly `purgeDelivered` deletes acked deliveries and fully delivered links older than 30 days ([ADR 0005](adr/0005-cursor-history-ttl.md)). History: `GET /v1/links`. Wipe: `DELETE /v1/account`.
+
+Sleep-mid-ack, duplicate share, and API restart: [what-breaks-if.md](what-breaks-if.md).
+
+## Curl-only trace
+
+```bash
+docker compose up --build -d
+# or: tests/e2e/compose_api.sh
+
+curl -sS -D - http://127.0.0.1:8080/v1/pairings -H 'Content-Type: application/json' -d '{}'
+# 201, X-Request-Id, JSON code. slog request_id on the API log line.
+
+curl -sS http://127.0.0.1:8080/v1/pairings/claim -H 'Content-Type: application/json' \
+  -d '{"code":"ABCD-EFGH","type":"phone"}'
+# 201 token. Repeat claim → 409. deskdrop_pairings_total += 1
+
+# Mint laptop on the same user, then:
+curl -sS -D - http://127.0.0.1:8080/v1/links \
+  -H "Authorization: Bearer $PHONE" -H "Idempotency-Key: demo-1" \
+  -H 'Content-Type: application/json' \
+  -d '{"url":"https://example.com/from-phone","title":"demo","userId":"ignored"}'
+# 201. Replay same key → 200, same id. deskdrop_shares_total stays 1.
+
+curl -sS http://127.0.0.1:8080/v1/links/pending -H "Authorization: Bearer $LAPTOP"
+# {"links":[{id,url,...}]} twice if you do not ack (sleep-mid-ack).
+
+curl -sS -D - -X POST http://127.0.0.1:8080/v1/links/$LINK_ID/ack \
+  -H "Authorization: Bearer $LAPTOP"
+# 204; repeat 204; pending then []. One link_deliveries row.
+
+docker compose restart api
+# Pending unacked rows are still in Postgres after listen.
+
+curl -sS http://127.0.0.1:8080/metrics | grep -E 'deskdrop_(pairings|shares|pulls|acks)_total'
+```

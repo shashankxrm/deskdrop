@@ -46,3 +46,15 @@ Later steps add pairing/delivery tests in the same `go test ./...` invocation.
 ## CORS and rate limits (B6)
 
 `go test ./internal/httpserver/ -run 'TestCORS_|TestWriteLimit_|TestTokenBucket_|TestSecurityHeaders'` — disallowed Origin has no ACAO; 6th pairing create from one IP is 429; security headers on `/healthz`. `hey` demo is in [rate-limiter.md](rate-limiter.md) (not CI).
+
+## Compose E2E (B7)
+
+HTTP-only: pair phone + laptop, share, pull (twice still one row), ack, double ack still one `link_deliveries` row, replayed `Idempotency-Key` is 200. Not in GitHub Actions until D1.
+
+```bash
+docker compose up --build -d
+tests/e2e/compose_api.sh
+# e2e ok link_id=... deliveries=1
+```
+
+Needs Docker, `curl`, `python3`, and `psql` via `docker compose exec`. Trace and failure modes: [follow-one-link.md](../follow-one-link.md), [what-breaks-if.md](../what-breaks-if.md).

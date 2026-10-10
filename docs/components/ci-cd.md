@@ -5,7 +5,7 @@ B1b is test-only. Every push and pull request to `v2` runs Go `vet` and `go test
 ## Why this way
 
 - Catch a red `go test` before pairing (B2) lands on the branch.
-- Same command as local: `go test ./...`. Docker is already on `ubuntu-latest` runners; no extra Compose in CI yet (E2E compose script is B7/D1).
+- Same command as local: `go test ./...`. Docker is already on `ubuntu-latest` runners. Compose E2E (`tests/e2e/compose_api.sh`) is local in B7; D1 will add it to this workflow.
 - `permissions: contents: read` — this workflow does not need to push or deploy. Fork PRs can still run tests; they cannot deploy (there is no deploy job).
 
 ## Alternatives

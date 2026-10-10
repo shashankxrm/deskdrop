@@ -8,3 +8,4 @@ Architecture decision records land in this directory in the same step as the dec
 - [0004-at-least-once-ack.md](0004-at-least-once-ack.md) — B4.
 - [0005-cursor-history-ttl.md](0005-cursor-history-ttl.md) — B5.
 - [0006-per-pod-rate-limit.md](0006-per-pod-rate-limit.md) — B6.
+- [0007-pull-vs-push.md](0007-pull-vs-push.md) — B7.
