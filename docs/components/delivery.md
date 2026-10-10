@@ -1,18 +1,19 @@
 # Delivery (share, pull, ack)
 
-Share writes one `links` row and fans out `link_deliveries` to **currently paired, non-revoked laptops**. The agent pulls only its own unacked rows and acks them. See [ADR 0004](../adr/0004-at-least-once-ack.md).
+Share writes one `links` row and fans out `link_deliveries` to **currently paired, non-revoked laptops**. The agent pulls only its own unacked rows and acks them. History is cursor-paginated; delivered rows older than 30 days are purged. See [ADR 0004](../adr/0004-at-least-once-ack.md) and [ADR 0005](../adr/0005-cursor-history-ttl.md).
 
 ## Why this way
 
 - Unique `(user_id, idempotency_key)` so Android retries do not duplicate a share.
 - Fan-out at share time keeps pull a cheap indexed select. Laptops paired later do not receive older links.
-- Ack sets `acked_at`; a repeat ack is still 204. The row stays until B5 retention.
+- Ack sets `acked_at`; a repeat ack is still 204. An hourly job in the API process deletes acked deliveries and fully delivered links older than 30 days. Unacked rows are kept.
 
 ## Endpoints
 
 | Method | Path | Who |
 |---|---|---|
 | POST | `/v1/links` | any authed device; `Idempotency-Key` required; body `{url, title?}` (`userId` ignored) |
+| GET | `/v1/links` | any authed device; `limit` (1–100, default 20) and `cursor` |
 | GET | `/v1/links/pending` | **laptop** only |
 | POST | `/v1/links/{id}/ack` | **laptop** that has a delivery row |
 
@@ -36,6 +37,8 @@ Share writes one `links` row and fans out `link_deliveries` to **currently paire
 | Replay of the same key for that user | 200, same `id` |
 | Ack of a link this laptop never received | 404 |
 | Second ack | 204, still one `acked_at` |
+| Bad `limit` or `cursor` | 400 |
+| History next page | `next_cursor` omitted on the last page |
 
 ## Verify or demo
 
@@ -81,5 +84,9 @@ curl -sS http://127.0.0.1:8080/v1/links/pending \
 
 curl -sS http://127.0.0.1:8080/metrics | grep -E 'deskdrop_(shares|pulls|acks)_total'
 
-go test ./internal/httpserver/ -run 'TestShare_|TestAuth_'
+# History (newest first). Save next_cursor if present.
+curl -sS 'http://127.0.0.1:8080/v1/links?limit=2' -H "Authorization: Bearer $PHONE"
+curl -sS "http://127.0.0.1:8080/v1/links?limit=2&cursor=$CURSOR" -H "Authorization: Bearer $PHONE"
+
+go test ./internal/httpserver/ -run 'TestShare_|TestHistory_|TestRetention_|TestAccount_'
 ```

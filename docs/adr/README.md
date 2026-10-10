@@ -6,3 +6,4 @@ Architecture decision records land in this directory in the same step as the dec
 - [0002-pairing-hmac.md](0002-pairing-hmac.md) — B2.
 - [0003-cookie-vs-bearer.md](0003-cookie-vs-bearer.md) — B3.
 - [0004-at-least-once-ack.md](0004-at-least-once-ack.md) — B4.
+- [0005-cursor-history-ttl.md](0005-cursor-history-ttl.md) — B5.

@@ -70,8 +70,10 @@ func New(log *slog.Logger, pool *pgxpool.Pool, pepper string) *Server {
 	mux.HandleFunc("PATCH /v1/devices/{id}", s.requireAuth(s.renameDevice))
 	mux.HandleFunc("DELETE /v1/devices/{id}", s.requireAuth(s.revokeDevice))
 	mux.HandleFunc("POST /v1/links", s.requireAuth(s.shareLink))
+	mux.HandleFunc("GET /v1/links", s.requireAuth(s.listHistory))
 	mux.HandleFunc("GET /v1/links/pending", s.requireAuth(s.pendingLinks))
 	mux.HandleFunc("POST /v1/links/{id}/ack", s.requireAuth(s.ackLink))
+	mux.HandleFunc("DELETE /v1/account", s.requireAuth(s.deleteAccount))
 	s.Handler = s.withRequestID(s.withMetrics(mux))
 	return s
 }

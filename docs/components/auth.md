@@ -18,12 +18,15 @@ Every authenticated request is a **device**. User id is loaded from `devices` vi
 | POST | `/v1/links` | auth required; see [delivery.md](delivery.md) |
 | GET | `/v1/links/pending` | laptop only; see [delivery.md](delivery.md) |
 | POST | `/v1/links/{id}/ack` | laptop only; see [delivery.md](delivery.md) |
+| GET | `/v1/links` | history; see [delivery.md](delivery.md) |
+| DELETE | `/v1/account` | deletes the user row; FKs cascade; web cookie cleared |
 
 ## Failure modes
 
 - Missing/invalid/revoked token: 401.
 - Rename/revoke a device that is not yours: 404 (no leak).
 - Revoked token cannot list, share, or pull.
+- After `DELETE /v1/account`, every device token for that user is 401 and no `users`/`devices`/`links` rows remain.
 
 ## Verify or demo
 
@@ -49,5 +52,9 @@ curl -sS -D - http://127.0.0.1:8080/v1/links/pending \
   -H "Authorization: Bearer $TOKEN"
 # 401 after revoke; a live laptop token gets 200 `{"links":[]}` if nothing is pending
 
-go test ./internal/httpserver/ -run 'TestAuth_|TestPairing_'
+curl -sS -D - -X DELETE http://127.0.0.1:8080/v1/account \
+  -H "Authorization: Bearer $TOKEN"
+# 204; the same token then 401s on /v1/devices
+
+go test ./internal/httpserver/ -run 'TestAuth_|TestPairing_|TestAccount_'
 ```

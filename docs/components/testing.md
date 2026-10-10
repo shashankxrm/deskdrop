@@ -38,3 +38,7 @@ Later steps add pairing/delivery tests in the same `go test ./...` invocation.
 ## Delivery (B4)
 
 `go test ./internal/httpserver/ -run TestShare_` — table-driven URL/body/key validation, idempotent replay, phone cannot pull, double ack, late laptop misses old shares, `/metrics` counters (testcontainers). Same `go test ./...` as CI.
+
+## History, account, retention (B5)
+
+`go test ./internal/httpserver/ -run 'TestHistory_|TestAccount_|TestRetention_'` — cursor pages stay stable after a new share, `DELETE /v1/account` leaves zero rows for that user, stamped 31-day-old delivered rows are purged (unacked kept). Same `go test ./...` as CI.

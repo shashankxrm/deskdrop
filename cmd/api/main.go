@@ -37,9 +37,14 @@ func run(args []string) int {
 	}
 	defer pool.Close()
 
+	api := httpserver.New(slog.Default(), pool, cfg.DeviceTokenPepper)
+	retainCtx, retainStop := context.WithCancel(context.Background())
+	defer retainStop()
+	go api.RunRetention(retainCtx)
+
 	srv := &http.Server{
 		Addr:              cfg.HTTPAddr,
-		Handler:           httpserver.New(slog.Default(), pool, cfg.DeviceTokenPepper),
+		Handler:           api,
 		ReadHeaderTimeout: 5 * time.Second,
 		ReadTimeout:       15 * time.Second,
 		WriteTimeout:      15 * time.Second,
@@ -70,6 +75,7 @@ func run(args []string) int {
 	case <-sig:
 	}
 
+	retainStop()
 	shutCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	if err := srv.Shutdown(shutCtx); err != nil {

@@ -54,9 +54,9 @@ func TestHealthz_debugLog(t *testing.T) {
 
 func TestRequestID_sanitize(t *testing.T) {
 	tests := []struct {
-		name  string
-		in    string
-		keep  bool
+		name string
+		in   string
+		keep bool
 	}{
 		{name: "valid", in: "test-request_id-1", keep: true},
 		{name: "empty", in: "", keep: false},
