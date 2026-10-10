@@ -24,7 +24,7 @@ Go API, PostgreSQL, Next.js dashboard, Kotlin Android client, Go macOS tray agen
 - [Follow one link](docs/follow-one-link.md) / [What breaks if](docs/what-breaks-if.md)
 - [v1 retrospective](docs/v1-retrospective.md) (why the first version never worked end to end)
 - [Database schema](docs/components/database-schema.md)
-- [Oracle / Terraform (A0 pending)](docs/components/terraform.md)
+- [Oracle / Terraform (A0 Ampere)](docs/components/terraform.md)
 - [Testing](docs/components/testing.md) / [CI](docs/components/ci-cd.md)
 - [Pairing](docs/components/pairing.md) / [Auth](docs/components/auth.md)
 - [Delivery, history, retention](docs/components/delivery.md)

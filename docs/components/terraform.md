@@ -1,19 +1,19 @@
 # Terraform / Oracle Cloud (A0)
 
-**A0 status: pending.** Oracle signup has not succeeded yet. Work continues on later steps. When the account exists and an instance attempt has a result, replace `pending` with exactly one of: `Ampere` / `micro only` / `refused`.
+**A0 status: Ampere.** Always Free `VM.Standard.A1.Flex` is Running (1 OCPU / 6 GB). SSH: `uname -m` → `aarch64`. D0 is Compose+Caddy on this VM. D4 k3s migrate is in-scope. Do not run Terraform until D3.
 
 | Field | Value |
 |---|---|
-| Outcome | pending |
-| Date | |
-| Tenancy home region | |
-| Shape | |
-| Availability domain | |
-| Instance OCID | |
-| Public IPv4 | |
-| Notes | A0 blocked on OCI signup. Do not run Terraform until D3. |
+| Outcome | Ampere |
+| Date | 2026-10-10 |
+| Tenancy home region | fill from console (home region is permanent) |
+| Shape | `VM.Standard.A1.Flex`, 1 OCPU, 6 GB (2/12 was out of capacity) |
+| Availability domain | not AD-2 (AD-2 returned out of host capacity); copy the AD from instance details |
+| Instance OCID | copy from instance details |
+| Public IPv4 | 137.131.14.30 (ephemeral; private 10.0.0.95) |
+| Notes | Ubuntu user `ubuntu`. SSH key is the wizard-generated private key (`ssh-key-2026-10-10.key`), not `id_ed25519`. Keep the VM Running (idle reclaim). No Docker/k3s yet. |
 
-A0 is not green while outcome is `pending`. D3 will Terraform-ify the shape recorded here. D4 (Compose → k3s) runs only if outcome is `Ampere`.
+D3 will Terraform-ify this shape. D4 (Compose → k3s) runs because outcome is `Ampere`.
 
 ## What this is
 

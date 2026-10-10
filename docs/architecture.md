@@ -4,7 +4,7 @@ Updated C2. Update this file whenever a component joins the flow.
 
 ## What it is
 
-deskdrop queues a URL from an Android share until a paired laptop agent pulls it, opens the default browser, and acks. One user is one pairing chain. Production target is a single Always Free Oracle VM (A0 **pending**).
+deskdrop queues a URL from an Android share until a paired laptop agent pulls it, opens the default browser, and acks. One user is one pairing chain. Production target is a single Always Free Oracle **Ampere** VM (A0 recorded in [terraform.md](components/terraform.md)).
 
 Locally, Docker Compose runs Postgres 16, golang-migrate, and the Go API (`/healthz`, `/readyz`, `/metrics`).
 
@@ -17,7 +17,7 @@ Locally, Docker Compose runs Postgres 16, golang-migrate, and the Go API (`/heal
 | Android client | pairing + `ACTION_SEND` share | C1–C2 ([android.md](components/android.md)) |
 | macOS agent | poll, open browser, ack | not started (C3) |
 | Next.js dashboard | pair, devices, history, delete account | not started (C4) |
-| Oracle VM | public HTTPS later | A0 pending |
+| Oracle VM | Ampere A1 Flex 1 OCPU / 6 GB Running; public HTTPS at D0 | A0 Ampere ([terraform.md](components/terraform.md)) |
 | CI | `go vet` + `go test ./...` on push/PR to `v2` | B1b ([ci-cd.md](components/ci-cd.md)) |
 
 Queue choice: [ADR 0001 — Postgres as the delivery queue](adr/0001-postgres-as-queue.md). Pull vs push: [ADR 0007](adr/0007-pull-vs-push.md). Ack: [ADR 0004](adr/0004-at-least-once-ack.md). History/TTL: [ADR 0005](adr/0005-cursor-history-ttl.md). Limits: [ADR 0006](adr/0006-per-pod-rate-limit.md).
