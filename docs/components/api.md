@@ -1,6 +1,6 @@
 # API
 
-Go `net/http` process (`go 1.26` in go.mod so testcontainers’ transitive modules compile). B1 is the skeleton: config from env, JSON `slog`, request IDs, graceful shutdown, liveness/readiness, Prometheus latency histogram. Pairing and delivery are later steps.
+Go `net/http` process (`go 1.26` in go.mod so testcontainers’ transitive modules compile). B1 is the skeleton: config from env, JSON `slog`, request IDs, graceful shutdown, liveness/readiness, Prometheus latency histogram. Pairing, auth, and share/pull/ack are later B steps.
 
 ## Why this way
 

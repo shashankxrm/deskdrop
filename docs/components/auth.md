@@ -15,8 +15,9 @@ Every authenticated request is a **device**. User id is loaded from `devices` vi
 | GET | `/v1/devices` | Bearer or cookie |
 | PATCH | `/v1/devices/{id}` | same user; body `{name}` (`userId` ignored) |
 | DELETE | `/v1/devices/{id}` | unpair (sets `revoked_at`) |
-| POST | `/v1/links` | auth required; **501 until B4** |
-| GET | `/v1/links/pending` | auth required; **501 until B4** |
+| POST | `/v1/links` | auth required; see [delivery.md](delivery.md) |
+| GET | `/v1/links/pending` | laptop only; see [delivery.md](delivery.md) |
+| POST | `/v1/links/{id}/ack` | laptop only; see [delivery.md](delivery.md) |
 
 ## Failure modes
 
@@ -46,7 +47,7 @@ curl -sS -D - -X DELETE http://127.0.0.1:8080/v1/devices/$DEVICE_ID \
 
 curl -sS -D - http://127.0.0.1:8080/v1/links/pending \
   -H "Authorization: Bearer $TOKEN"
-# 401
+# 401 after revoke; a live laptop token gets 200 `{"links":[]}` if nothing is pending
 
 go test ./internal/httpserver/ -run 'TestAuth_|TestPairing_'
 ```

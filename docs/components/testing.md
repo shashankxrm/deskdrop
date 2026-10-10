@@ -33,4 +33,8 @@ Later steps add pairing/delivery tests in the same `go test ./...` invocation.
 
 ## Auth (B3)
 
-`go test ./internal/httpserver/ -run TestAuth_` — Bearer vs cookie, rename ignores `userId`, revoke then 401 on list/share/pull stubs.
+`go test ./internal/httpserver/ -run TestAuth_` — Bearer vs cookie, rename ignores `userId`, revoke then 401 on list/share/pull. Laptop pending after B4 is 200 (empty list).
+
+## Delivery (B4)
+
+`go test ./internal/httpserver/ -run TestShare_` — table-driven URL/body/key validation, idempotent replay, phone cannot pull, double ack, late laptop misses old shares, `/metrics` counters (testcontainers). Same `go test ./...` as CI.

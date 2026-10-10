@@ -36,11 +36,11 @@ func (s *Server) listDevices(w http.ResponseWriter, r *http.Request) {
 	out := make([]map[string]any, 0)
 	for rows.Next() {
 		var (
-			id        uuid.UUID
-			name      string
-			typ       string
-			created   time.Time
-			lastSeen  *time.Time
+			id       uuid.UUID
+			name     string
+			typ      string
+			created  time.Time
+			lastSeen *time.Time
 		)
 		if err := rows.Scan(&id, &name, &typ, &created, &lastSeen); err != nil {
 			writeErr(w, http.StatusInternalServerError, "internal")
@@ -121,23 +121,4 @@ func (s *Server) revokeDevice(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
-}
-
-// shareLink and pendingLinks are auth-gated stubs until B4.
-func (s *Server) shareLink(w http.ResponseWriter, r *http.Request) {
-	_, ok := deviceFrom(r.Context())
-	if !ok {
-		writeErr(w, http.StatusUnauthorized, "unauthorized")
-		return
-	}
-	writeErr(w, http.StatusNotImplemented, "not implemented")
-}
-
-func (s *Server) pendingLinks(w http.ResponseWriter, r *http.Request) {
-	_, ok := deviceFrom(r.Context())
-	if !ok {
-		writeErr(w, http.StatusUnauthorized, "unauthorized")
-		return
-	}
-	writeErr(w, http.StatusNotImplemented, "not implemented")
 }

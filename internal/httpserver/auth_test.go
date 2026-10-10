@@ -122,7 +122,7 @@ func TestAuth_secondDeviceSurvivesRevokeOfFirst(t *testing.T) {
 	if doJSON(t, srv, http.MethodGet, "/v1/devices", "", "Bearer "+d2.Token, "").Code != http.StatusOK {
 		t.Fatal("laptop should still auth")
 	}
-	if doJSON(t, srv, http.MethodGet, "/v1/links/pending", "", "Bearer "+d2.Token, "").Code != http.StatusNotImplemented {
-		t.Fatal("authed laptop pull stub")
+	if doJSON(t, srv, http.MethodGet, "/v1/links/pending", "", "Bearer "+d2.Token, "").Code != http.StatusOK {
+		t.Fatal("authed laptop pull")
 	}
 }

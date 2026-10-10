@@ -1,6 +1,6 @@
 # Architecture
 
-Updated A2. Update this file whenever a component joins the flow.
+Updated B4. Update this file whenever a component joins the flow.
 
 ## What it is
 
@@ -12,7 +12,7 @@ Locally, Docker Compose runs Postgres 16, golang-migrate, and the Go API (`/heal
 
 | Piece | Role | Status |
 |---|---|---|
-| Go API | pairing, Bearer/cookie auth, device CRUD | B1–B3 ([api.md](components/api.md), [pairing.md](components/pairing.md), [auth.md](components/auth.md)) |
+| Go API | pairing, auth, share/pull/ack | B1–B4 ([api.md](components/api.md), [pairing.md](components/pairing.md), [auth.md](components/auth.md), [delivery.md](components/delivery.md)) |
 | PostgreSQL | users, devices, pairing_codes, links, link_deliveries | A2 — schema in [database-schema.md](components/database-schema.md) |
 | Android client | pair + share target | not started (C1–C2) |
 | macOS agent | poll, open browser, ack | not started (C3) |
@@ -20,7 +20,7 @@ Locally, Docker Compose runs Postgres 16, golang-migrate, and the Go API (`/heal
 | Oracle VM | public HTTPS later | A0 pending |
 | CI | `go vet` + `go test ./...` on push/PR to `v2` | B1b ([ci-cd.md](components/ci-cd.md)) |
 
-Queue choice: [ADR 0001 — Postgres as the delivery queue](adr/0001-postgres-as-queue.md).
+Queue choice: [ADR 0001 — Postgres as the delivery queue](adr/0001-postgres-as-queue.md). Ack semantics: [ADR 0004](adr/0004-at-least-once-ack.md).
 
 ## Data flow (target)
 
@@ -45,5 +45,6 @@ sequenceDiagram
 
 - Schema: [database-schema.md](components/database-schema.md)
 - API: [api.md](components/api.md) (`go test ./...`, `curl /readyz`, `/metrics`)
+- Delivery: [delivery.md](components/delivery.md) (share, pending, ack)
 - Suites: [testing.md](components/testing.md)
 - CI: [ci-cd.md](components/ci-cd.md) (job `go-test`)

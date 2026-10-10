@@ -24,6 +24,9 @@ type Server struct {
 	reg        *prometheus.Registry
 	lat        *prometheus.HistogramVec
 	pairings   prometheus.Counter
+	shares     prometheus.Counter
+	pulls      prometheus.Counter
+	acks       prometheus.Counter
 	claimFails *claimLimiter
 	http.Handler
 }
@@ -42,9 +45,21 @@ func New(log *slog.Logger, pool *pgxpool.Pool, pepper string) *Server {
 		Name: "deskdrop_pairings_total",
 		Help: "Successful pairing claims (a device received a token).",
 	})
-	reg.MustRegister(lat, pairings)
+	shares := prometheus.NewCounter(prometheus.CounterOpts{
+		Name: "deskdrop_shares_total",
+		Help: "New shared links (idempotent replays are not counted).",
+	})
+	pulls := prometheus.NewCounter(prometheus.CounterOpts{
+		Name: "deskdrop_pulls_total",
+		Help: "Successful pending-link pulls by a laptop.",
+	})
+	acks := prometheus.NewCounter(prometheus.CounterOpts{
+		Name: "deskdrop_acks_total",
+		Help: "Successful acks (including idempotent repeats).",
+	})
+	reg.MustRegister(lat, pairings, shares, pulls, acks)
 
-	s := &Server{log: log, pool: pool, pepper: pepper, reg: reg, lat: lat, pairings: pairings, claimFails: newClaimLimiter()}
+	s := &Server{log: log, pool: pool, pepper: pepper, reg: reg, lat: lat, pairings: pairings, shares: shares, pulls: pulls, acks: acks, claimFails: newClaimLimiter()}
 	mux := http.NewServeMux()
 	mux.HandleFunc("/healthz", s.healthz)
 	mux.HandleFunc("/readyz", s.readyz)
@@ -56,6 +71,7 @@ func New(log *slog.Logger, pool *pgxpool.Pool, pepper string) *Server {
 	mux.HandleFunc("DELETE /v1/devices/{id}", s.requireAuth(s.revokeDevice))
 	mux.HandleFunc("POST /v1/links", s.requireAuth(s.shareLink))
 	mux.HandleFunc("GET /v1/links/pending", s.requireAuth(s.pendingLinks))
+	mux.HandleFunc("POST /v1/links/{id}/ack", s.requireAuth(s.ackLink))
 	s.Handler = s.withRequestID(s.withMetrics(mux))
 	return s
 }
