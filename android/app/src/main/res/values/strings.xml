@@ -12,4 +12,11 @@
     <string name="paired">Paired. Token is on-device only.</string>
     <string name="need_url">Set the API URL (your computer\'s LAN address, port 8080).</string>
     <string name="need_code">Paste or scan a pairing code.</string>
+    <string name="share_need_pair">Pair this phone first.</string>
+    <string name="share_not_url">Not an http(s) URL. Nothing sent.</string>
+    <string name="share_sending">Sending…</string>
+    <string name="share_ok">Queued for your laptop.</string>
+    <string name="share_url_label">Send a URL (no share sheet)</string>
+    <string name="share_url_hint">https://youtube.com/watch?v=…</string>
+    <string name="send_link">Send to queue</string>
 </resources>

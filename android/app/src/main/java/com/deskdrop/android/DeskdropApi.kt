@@ -12,6 +12,12 @@ data class ClaimResult(
     val error: String?,
 )
 
+data class ShareResult(
+    val status: Int,
+    val id: String?,
+    val error: String?,
+) { val ok: Boolean get() = status == 201 || status == 200 }
+
 open class DeskdropApi(
     private val connectMs: Int = 8_000,
     private val readMs: Int = 15_000,
@@ -37,6 +43,47 @@ open class DeskdropApi(
                 status = status,
                 token = JsonStrings.string(raw, "token"),
                 deviceId = JsonStrings.string(raw, "device_id"),
+                error = JsonStrings.string(raw, "error"),
+            )
+        } finally {
+            conn.disconnect()
+        }
+    }
+
+    open fun share(
+        baseUrl: String,
+        token: String,
+        url: String,
+        title: String,
+        idempotencyKey: String,
+    ): ShareResult {
+        val root = baseUrl.trim().trimEnd('/')
+        val uri = URI.create("$root/v1/links")
+        val body = buildString {
+            append("{\"url\":").append(jsonQuote(url))
+            if (title.isNotEmpty()) {
+                append(",\"title\":").append(jsonQuote(title))
+            }
+            append('}')
+        }
+        val conn = (uri.toURL().openConnection() as HttpURLConnection).apply {
+            requestMethod = "POST"
+            connectTimeout = connectMs
+            readTimeout = readMs
+            doOutput = true
+            setRequestProperty("Content-Type", "application/json")
+            setRequestProperty("Accept", "application/json")
+            setRequestProperty("Authorization", "Bearer $token")
+            setRequestProperty("Idempotency-Key", idempotencyKey)
+        }
+        try {
+            conn.outputStream.use { it.write(body.toByteArray(StandardCharsets.UTF_8)) }
+            val status = conn.responseCode
+            val raw = (if (status in 200..299) conn.inputStream else conn.errorStream)
+                ?.bufferedReader(StandardCharsets.UTF_8)?.readText().orEmpty()
+            return ShareResult(
+                status = status,
+                id = JsonStrings.string(raw, "id"),
                 error = JsonStrings.string(raw, "error"),
             )
         } finally {
@@ -91,5 +138,43 @@ class RetryingClaim(
         }
         lastIo?.let { throw it }
         return last ?: ClaimResult(0, null, null, "no response")
+    }
+}
+
+class RetryingShare(
+    private val api: DeskdropApi,
+    private val backoff: Backoff,
+    private val maxAttempts: Int = 5,
+    private val sleep: (Long) -> Unit = { ms -> Thread.sleep(ms) },
+) {
+    fun share(
+        baseUrl: String,
+        token: String,
+        url: String,
+        title: String,
+        idempotencyKey: String,
+    ): ShareResult {
+        var last: ShareResult? = null
+        var lastIo: IOException? = null
+        repeat(maxAttempts) { attempt ->
+            try {
+                val res = api.share(baseUrl, token, url, title, idempotencyKey)
+                last = res
+                lastIo = null
+                if (!Backoff.shouldRetry(res.status, false)) {
+                    return res
+                }
+            } catch (e: IOException) {
+                lastIo = e
+                if (!Backoff.shouldRetry(null, true)) {
+                    throw e
+                }
+            }
+            if (attempt < maxAttempts - 1) {
+                sleep(backoff.delayMs(attempt))
+            }
+        }
+        lastIo?.let { throw it }
+        return last ?: ShareResult(0, null, "no response")
     }
 }

@@ -1,14 +1,17 @@
 package com.deskdrop.android
 
 import android.content.ClipboardManager
+import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.view.View
 import android.widget.Button
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.textfield.TextInputEditText
+import com.google.android.material.textfield.TextInputLayout
 import com.google.zxing.client.android.Intents
 import com.journeyapps.barcodescanner.ScanContract
 import com.journeyapps.barcodescanner.ScanOptions
@@ -32,6 +35,17 @@ class PairActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        if (intent?.action == Intent.ACTION_SEND) {
+            startActivity(
+                Intent(this, ShareActivity::class.java).apply {
+                    action = Intent.ACTION_SEND
+                    type = intent.type ?: "text/plain"
+                    putExtras(intent)
+                },
+            )
+            finish()
+            return
+        }
         setContentView(R.layout.activity_pair)
         store = SessionStore(this)
         apiUrl = findViewById(R.id.apiUrl)
@@ -52,6 +66,7 @@ class PairActivity : AppCompatActivity() {
             )
         }
         pair.setOnClickListener { startPair() }
+        findViewById<Button>(R.id.sendLink).setOnClickListener { sendFromBox() }
         unpair.setOnClickListener {
             store.clear()
             renderPaired()
@@ -103,9 +118,47 @@ class PairActivity : AppCompatActivity() {
         }
     }
 
+    private fun sendFromBox() {
+        val raw = findViewById<TextInputEditText>(R.id.shareUrl).text?.toString().orEmpty()
+        val payload = ShareUrl.fromSend(raw, null)
+        if (payload == null) {
+            status.setText(R.string.share_not_url)
+            return
+        }
+        if (!store.isPaired) {
+            status.setText(R.string.share_need_pair)
+            return
+        }
+        status.setText(R.string.share_sending)
+        val key = ShareSubmit.newKey()
+        io.execute {
+            try {
+                val res = RetryingShare(DeskdropApi(), Backoff()).share(
+                    store.baseUrl,
+                    store.token,
+                    payload.url,
+                    payload.title,
+                    key,
+                )
+                main.post {
+                    if (res.ok) {
+                        status.text = getString(R.string.share_ok)
+                        Toast.makeText(this, R.string.share_ok, Toast.LENGTH_SHORT).show()
+                    } else {
+                        status.text = "Share failed (${res.status}): ${res.error ?: ""}"
+                    }
+                }
+            } catch (e: IOException) {
+                main.post { status.text = "Network error: ${e.message}" }
+            }
+        }
+    }
+
     private fun renderPaired() {
         val paired = store.isPaired
         unpair.visibility = if (paired) View.VISIBLE else View.GONE
+        findViewById<TextInputLayout>(R.id.shareBox).visibility = if (paired) View.VISIBLE else View.GONE
+        findViewById<Button>(R.id.sendLink).visibility = if (paired) View.VISIBLE else View.GONE
         pair.isEnabled = !paired
         if (paired) {
             status.text = getString(R.string.paired) + "\n" + store.deviceId
