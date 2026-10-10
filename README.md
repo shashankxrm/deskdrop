@@ -25,6 +25,6 @@ Go API, PostgreSQL, Next.js dashboard, Kotlin Android client, Go macOS tray agen
 - [Database schema](docs/components/database-schema.md)
 - [Oracle / Terraform (A0 pending)](docs/components/terraform.md)
 - [Testing](docs/components/testing.md) / [CI](docs/components/ci-cd.md)
-- [Pairing](docs/components/pairing.md)
+- [Pairing](docs/components/pairing.md) / [Auth](docs/components/auth.md)
 
 Local API: `/healthz`, `/readyz` (Postgres ping), `/metrics` (latency histogram). Pairing is not built yet. See [testing.md](docs/components/testing.md).

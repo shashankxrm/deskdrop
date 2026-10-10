@@ -30,3 +30,7 @@ Later steps add pairing/delivery tests in the same `go test ./...` invocation.
 ## Pairing (B2)
 
 `go test ./internal/httpserver/ ./internal/tokhash/` covers bootstrap vs extra device, HMAC-at-rest, 409/410, and 6th wrong claim → 429 (testcontainers). Same `go test ./...` as CI.
+
+## Auth (B3)
+
+`go test ./internal/httpserver/ -run TestAuth_` — Bearer vs cookie, rename ignores `userId`, revoke then 401 on list/share/pull stubs.

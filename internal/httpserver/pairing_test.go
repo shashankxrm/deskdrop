@@ -32,7 +32,7 @@ func pairingServer(t *testing.T) (*Server, *pgxpool.Pool) {
 	return New(slog.New(slog.NewJSONHandler(io.Discard, nil)), pool, testPepper), pool
 }
 
-func doJSON(t *testing.T, srv http.Handler, method, path, remote, auth, body string) *httptest.ResponseRecorder {
+func doJSON(t *testing.T, srv http.Handler, method, path, remote, auth, body string, cookies ...*http.Cookie) *httptest.ResponseRecorder {
 	t.Helper()
 	req := httptest.NewRequest(method, path, strings.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
@@ -44,9 +44,35 @@ func doJSON(t *testing.T, srv http.Handler, method, path, remote, auth, body str
 	if auth != "" {
 		req.Header.Set("Authorization", auth)
 	}
+	for _, c := range cookies {
+		req.AddCookie(c)
+	}
 	rec := httptest.NewRecorder()
 	srv.ServeHTTP(rec, req)
 	return rec
+}
+
+func pairDevice(t *testing.T, srv http.Handler, typ string) (token, deviceID string, rec *httptest.ResponseRecorder) {
+	t.Helper()
+	cre := doJSON(t, srv, http.MethodPost, "/v1/pairings", "", "", "")
+	var c struct {
+		Code string `json:"code"`
+	}
+	if err := json.Unmarshal(cre.Body.Bytes(), &c); err != nil {
+		t.Fatal(err)
+	}
+	rec = doJSON(t, srv, http.MethodPost, "/v1/pairings/claim", "", "", `{"code":"`+c.Code+`","type":"`+typ+`"}`)
+	if rec.Code != http.StatusCreated {
+		t.Fatalf("claim status=%d body=%s", rec.Code, rec.Body.String())
+	}
+	var cl struct {
+		Token    string `json:"token"`
+		DeviceID string `json:"device_id"`
+	}
+	if err := json.Unmarshal(rec.Body.Bytes(), &cl); err != nil {
+		t.Fatal(err)
+	}
+	return cl.Token, cl.DeviceID, rec
 }
 
 func TestPairing_bootstrapClaimAndIdempotent(t *testing.T) {

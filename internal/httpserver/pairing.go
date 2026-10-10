@@ -38,25 +38,17 @@ func (s *Server) createPairing(w http.ResponseWriter, r *http.Request) {
 	_ = body.UserID // identity never comes from JSON
 
 	var userID uuid.UUID
-	auth := r.Header.Get("Authorization")
-	if auth == "" {
+	if hasCredentials(r) {
+		dev, err := s.authenticate(r)
+		if err != nil {
+			writeErr(w, http.StatusUnauthorized, "unauthorized")
+			return
+		}
+		userID = dev.UserID
+	} else {
 		if err := s.pool.QueryRow(r.Context(), `INSERT INTO users DEFAULT VALUES RETURNING id`).Scan(&userID); err != nil {
 			s.log.Error("bootstrap user", "err", err, "request_id", requestIDFrom(r.Context()))
 			writeErr(w, http.StatusInternalServerError, "internal")
-			return
-		}
-	} else {
-		token, ok := bearerToken(auth)
-		if !ok {
-			writeErr(w, http.StatusUnauthorized, "unauthorized")
-			return
-		}
-		err := s.pool.QueryRow(r.Context(),
-			`SELECT user_id FROM devices WHERE token_hash = $1 AND revoked_at IS NULL`,
-			tokhash.Sum(s.pepper, token),
-		).Scan(&userID)
-		if err != nil {
-			writeErr(w, http.StatusUnauthorized, "unauthorized")
 			return
 		}
 	}
@@ -151,6 +143,9 @@ func (s *Server) claimPairing(w http.ResponseWriter, r *http.Request) {
 	}
 
 	s.pairings.Inc()
+	if body.Type == "web" {
+		http.SetCookie(w, sessionCookie(token))
+	}
 	writeJSON(w, http.StatusCreated, map[string]any{
 		"token":     token,
 		"device_id": deviceID.String(),

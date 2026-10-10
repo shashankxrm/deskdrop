@@ -51,6 +51,11 @@ func New(log *slog.Logger, pool *pgxpool.Pool, pepper string) *Server {
 	mux.Handle("/metrics", promhttp.HandlerFor(reg, promhttp.HandlerOpts{}))
 	mux.HandleFunc("POST /v1/pairings", s.createPairing)
 	mux.HandleFunc("POST /v1/pairings/claim", s.claimPairing)
+	mux.HandleFunc("GET /v1/devices", s.requireAuth(s.listDevices))
+	mux.HandleFunc("PATCH /v1/devices/{id}", s.requireAuth(s.renameDevice))
+	mux.HandleFunc("DELETE /v1/devices/{id}", s.requireAuth(s.revokeDevice))
+	mux.HandleFunc("POST /v1/links", s.requireAuth(s.shareLink))
+	mux.HandleFunc("GET /v1/links/pending", s.requireAuth(s.pendingLinks))
 	s.Handler = s.withRequestID(s.withMetrics(mux))
 	return s
 }

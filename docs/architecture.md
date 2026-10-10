@@ -12,7 +12,7 @@ Locally, Docker Compose runs Postgres 16, golang-migrate, and the Go API (`/heal
 
 | Piece | Role | Status |
 |---|---|---|
-| Go API | env, slog, `/healthz` `/readyz` `/metrics`, pairing | B1–B2 ([api.md](components/api.md), [pairing.md](components/pairing.md)) |
+| Go API | pairing, Bearer/cookie auth, device CRUD | B1–B3 ([api.md](components/api.md), [pairing.md](components/pairing.md), [auth.md](components/auth.md)) |
 | PostgreSQL | users, devices, pairing_codes, links, link_deliveries | A2 — schema in [database-schema.md](components/database-schema.md) |
 | Android client | pair + share target | not started (C1–C2) |
 | macOS agent | poll, open browser, ack | not started (C3) |
