@@ -20,8 +20,8 @@ func TestLoad_required(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "missing both",
-			env:  map[string]string{},
+			name:    "missing both",
+			env:     map[string]string{},
 			wantErr: true,
 		},
 		{
@@ -70,5 +70,15 @@ func TestLoad_required(t *testing.T) {
 				t.Fatalf("pepper not loaded")
 			}
 		})
+	}
+}
+
+func TestSplitCORSOrigins(t *testing.T) {
+	got := SplitCORSOrigins(" https://a.example,http://127.0.0.1:3000 , ")
+	if len(got) != 2 || got[0] != "https://a.example" || got[1] != "http://127.0.0.1:3000" {
+		t.Fatalf("got %#v", got)
+	}
+	if SplitCORSOrigins("") != nil && len(SplitCORSOrigins("")) != 0 {
+		t.Fatal("empty should be empty list")
 	}
 }

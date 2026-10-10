@@ -42,3 +42,7 @@ Later steps add pairing/delivery tests in the same `go test ./...` invocation.
 ## History, account, retention (B5)
 
 `go test ./internal/httpserver/ -run 'TestHistory_|TestAccount_|TestRetention_'` — cursor pages stay stable after a new share, `DELETE /v1/account` leaves zero rows for that user, stamped 31-day-old delivered rows are purged (unacked kept). Same `go test ./...` as CI.
+
+## CORS and rate limits (B6)
+
+`go test ./internal/httpserver/ -run 'TestCORS_|TestWriteLimit_|TestTokenBucket_|TestSecurityHeaders'` — disallowed Origin has no ACAO; 6th pairing create from one IP is 429; security headers on `/healthz`. `hey` demo is in [rate-limiter.md](rate-limiter.md) (not CI).

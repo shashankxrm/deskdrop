@@ -16,6 +16,7 @@ Bootstrap creates a user and a short-lived code. Claim returns a device token on
 | Already used | 409 |
 | Expired (~3 min) | 410 |
 | 6th failed claim / IP / minute | 429 |
+| 6th pairing **create** / IP / minute (token bucket, B6) | 429 |
 | Bad or missing Bearer on extra-device create | 401 |
 
 ## Verify or demo

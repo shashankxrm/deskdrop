@@ -53,6 +53,8 @@ services:
       DATABASE_URL: postgres://deskdrop:deskdrop@postgres:5432/deskdrop?sslmode=disable
       # Local compose only. Not a code default; the process still exits if this is unset.
       DEVICE_TOKEN_PEPPER: compose-local-pepper
+      # Comma-separated browser Origins. Empty = no ACAO (curl/agents unchanged). C4 dashboard will set this.
+      CORS_ORIGINS: ""
     healthcheck:
       test:
         [

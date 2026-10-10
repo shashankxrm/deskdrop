@@ -18,20 +18,23 @@ import (
 const requestIDHeader = "X-Request-Id"
 
 type Server struct {
-	log        *slog.Logger
-	pool       *pgxpool.Pool
-	pepper     string
-	reg        *prometheus.Registry
-	lat        *prometheus.HistogramVec
-	pairings   prometheus.Counter
-	shares     prometheus.Counter
-	pulls      prometheus.Counter
-	acks       prometheus.Counter
-	claimFails *claimLimiter
+	log             *slog.Logger
+	pool            *pgxpool.Pool
+	pepper          string
+	reg             *prometheus.Registry
+	lat             *prometheus.HistogramVec
+	pairings        prometheus.Counter
+	shares          prometheus.Counter
+	pulls           prometheus.Counter
+	acks            prometheus.Counter
+	claimFails      *claimLimiter
+	pairCreateLimit *tokenBucket
+	shareLimit      *tokenBucket
+	corsOrigins     map[string]struct{}
 	http.Handler
 }
 
-func New(log *slog.Logger, pool *pgxpool.Pool, pepper string) *Server {
+func New(log *slog.Logger, pool *pgxpool.Pool, pepper string, corsOrigins ...string) *Server {
 	if log == nil {
 		log = slog.Default()
 	}
@@ -59,7 +62,21 @@ func New(log *slog.Logger, pool *pgxpool.Pool, pepper string) *Server {
 	})
 	reg.MustRegister(lat, pairings, shares, pulls, acks)
 
-	s := &Server{log: log, pool: pool, pepper: pepper, reg: reg, lat: lat, pairings: pairings, shares: shares, pulls: pulls, acks: acks, claimFails: newClaimLimiter()}
+	s := &Server{
+		log:             log,
+		pool:            pool,
+		pepper:          pepper,
+		reg:             reg,
+		lat:             lat,
+		pairings:        pairings,
+		shares:          shares,
+		pulls:           pulls,
+		acks:            acks,
+		claimFails:      newClaimLimiter(),
+		pairCreateLimit: newTokenBucket(pairCreateBurst, pairCreateRate),
+		shareLimit:      newTokenBucket(shareBurst, shareRate),
+		corsOrigins:     originSet(corsOrigins),
+	}
 	mux := http.NewServeMux()
 	mux.HandleFunc("/healthz", s.healthz)
 	mux.HandleFunc("/readyz", s.readyz)
@@ -74,7 +91,7 @@ func New(log *slog.Logger, pool *pgxpool.Pool, pepper string) *Server {
 	mux.HandleFunc("GET /v1/links/pending", s.requireAuth(s.pendingLinks))
 	mux.HandleFunc("POST /v1/links/{id}/ack", s.requireAuth(s.ackLink))
 	mux.HandleFunc("DELETE /v1/account", s.requireAuth(s.deleteAccount))
-	s.Handler = s.withRequestID(s.withMetrics(mux))
+	s.Handler = s.withRequestID(s.withMetrics(s.withSecurity(s.withCORS(s.withWriteLimit(mux)))))
 	return s
 }
 

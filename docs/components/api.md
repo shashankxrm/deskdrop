@@ -9,6 +9,7 @@ Go `net/http` process (`go 1.26` in go.mod so testcontainers’ transitive modul
 - Each request gets `X-Request-Id` on the response and in the JSON log field `request_id`. Incoming values are kept only if they match `[A-Za-z0-9-_]{1,64}`; otherwise a new id is generated.
 - `/healthz` and `/readyz` log at DEBUG so Compose healthchecks do not flood INFO.
 - Latency is `deskdrop_http_request_duration_seconds{method,code,route}` on `/metrics`. `route` is the ServeMux pattern (e.g. `/v1/links/{id}/ack`), never the raw URL path; unmatched requests use `route="unmatched"`.
+- CORS allowlist is `CORS_ORIGINS` (optional). Empty = no `Access-Control-Allow-Origin`. Security headers and per-pod write limits: [rate-limiter.md](rate-limiter.md).
 
 ## Alternatives
 

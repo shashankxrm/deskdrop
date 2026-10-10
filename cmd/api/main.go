@@ -37,7 +37,7 @@ func run(args []string) int {
 	}
 	defer pool.Close()
 
-	api := httpserver.New(slog.Default(), pool, cfg.DeviceTokenPepper)
+	api := httpserver.New(slog.Default(), pool, cfg.DeviceTokenPepper, cfg.CORSOrigins...)
 	retainCtx, retainStop := context.WithCancel(context.Background())
 	defer retainStop()
 	go api.RunRetention(retainCtx)
