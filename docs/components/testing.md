@@ -26,3 +26,7 @@ CI job **go-test** (B1b) runs `go vet ./...` and `go test ./...` on every push/P
 `github.com/stretchr/testify` may appear as an **indirect** module of testcontainers-go. Our tests must not import it.
 
 Later steps add pairing/delivery tests in the same `go test ./...` invocation.
+
+## Pairing (B2)
+
+`go test ./internal/httpserver/ ./internal/tokhash/` covers bootstrap vs extra device, HMAC-at-rest, 409/410, and 6th wrong claim → 429 (testcontainers). Same `go test ./...` as CI.

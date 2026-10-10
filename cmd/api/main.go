@@ -39,7 +39,7 @@ func run(args []string) int {
 
 	srv := &http.Server{
 		Addr:              cfg.HTTPAddr,
-		Handler:           httpserver.New(slog.Default(), pool),
+		Handler:           httpserver.New(slog.Default(), pool, cfg.DeviceTokenPepper),
 		ReadHeaderTimeout: 5 * time.Second,
 		ReadTimeout:       15 * time.Second,
 		WriteTimeout:      15 * time.Second,

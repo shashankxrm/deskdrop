@@ -18,7 +18,7 @@ import (
 func TestHealthz(t *testing.T) {
 	var buf bytes.Buffer
 	log := slog.New(slog.NewJSONHandler(&buf, &slog.HandlerOptions{Level: slog.LevelInfo}))
-	srv := New(log, nil)
+	srv := New(log, nil, "test-pepper")
 
 	req := httptest.NewRequest(http.MethodGet, "/healthz", nil)
 	req.Header.Set(requestIDHeader, "test-request-id")
@@ -42,7 +42,7 @@ func TestHealthz(t *testing.T) {
 func TestHealthz_debugLog(t *testing.T) {
 	var buf bytes.Buffer
 	log := slog.New(slog.NewJSONHandler(&buf, &slog.HandlerOptions{Level: slog.LevelDebug}))
-	srv := New(log, nil)
+	srv := New(log, nil, "test-pepper")
 	req := httptest.NewRequest(http.MethodGet, "/healthz", nil)
 	req.Header.Set(requestIDHeader, "test-request-id")
 	rec := httptest.NewRecorder()
@@ -66,7 +66,7 @@ func TestRequestID_sanitize(t *testing.T) {
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			srv := New(slog.New(slog.NewJSONHandler(io.Discard, nil)), nil)
+			srv := New(slog.New(slog.NewJSONHandler(io.Discard, nil)), nil, "test-pepper")
 			req := httptest.NewRequest(http.MethodGet, "/healthz", nil)
 			if tc.in != "" {
 				req.Header.Set(requestIDHeader, tc.in)
@@ -88,7 +88,7 @@ func TestRequestID_sanitize(t *testing.T) {
 }
 
 func TestMetrics_histogramRoute(t *testing.T) {
-	srv := New(slog.New(slog.NewJSONHandler(io.Discard, nil)), nil)
+	srv := New(slog.New(slog.NewJSONHandler(io.Discard, nil)), nil, "test-pepper")
 	hreq := httptest.NewRequest(http.MethodGet, "/healthz", nil)
 	hrec := httptest.NewRecorder()
 	srv.ServeHTTP(hrec, hreq)
@@ -116,7 +116,7 @@ func TestMetrics_histogramRoute(t *testing.T) {
 }
 
 func TestReadyz_unavailable(t *testing.T) {
-	srv := New(slog.New(slog.NewJSONHandler(io.Discard, nil)), nil)
+	srv := New(slog.New(slog.NewJSONHandler(io.Discard, nil)), nil, "test-pepper")
 	rec := httptest.NewRecorder()
 	srv.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/readyz", nil))
 	if rec.Code != http.StatusServiceUnavailable {
@@ -135,7 +135,7 @@ func TestReadyz_ok(t *testing.T) {
 	}
 	t.Cleanup(pool.Close)
 
-	srv := New(slog.New(slog.NewJSONHandler(io.Discard, nil)), pool)
+	srv := New(slog.New(slog.NewJSONHandler(io.Discard, nil)), pool, "test-pepper")
 	rec := httptest.NewRecorder()
 	srv.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/readyz", nil))
 	if rec.Code != http.StatusOK {

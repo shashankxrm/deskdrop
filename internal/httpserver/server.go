@@ -18,14 +18,17 @@ import (
 const requestIDHeader = "X-Request-Id"
 
 type Server struct {
-	log  *slog.Logger
-	pool *pgxpool.Pool
-	reg  *prometheus.Registry
-	lat  *prometheus.HistogramVec
+	log        *slog.Logger
+	pool       *pgxpool.Pool
+	pepper     string
+	reg        *prometheus.Registry
+	lat        *prometheus.HistogramVec
+	pairings   prometheus.Counter
+	claimFails *claimLimiter
 	http.Handler
 }
 
-func New(log *slog.Logger, pool *pgxpool.Pool) *Server {
+func New(log *slog.Logger, pool *pgxpool.Pool, pepper string) *Server {
 	if log == nil {
 		log = slog.Default()
 	}
@@ -35,13 +38,19 @@ func New(log *slog.Logger, pool *pgxpool.Pool) *Server {
 		Help:    "HTTP request latency in seconds. route is the ServeMux pattern, never the raw path.",
 		Buckets: prometheus.DefBuckets,
 	}, []string{"method", "code", "route"})
-	reg.MustRegister(lat)
+	pairings := prometheus.NewCounter(prometheus.CounterOpts{
+		Name: "deskdrop_pairings_total",
+		Help: "Successful pairing claims (a device received a token).",
+	})
+	reg.MustRegister(lat, pairings)
 
-	s := &Server{log: log, pool: pool, reg: reg, lat: lat}
+	s := &Server{log: log, pool: pool, pepper: pepper, reg: reg, lat: lat, pairings: pairings, claimFails: newClaimLimiter()}
 	mux := http.NewServeMux()
 	mux.HandleFunc("/healthz", s.healthz)
 	mux.HandleFunc("/readyz", s.readyz)
 	mux.Handle("/metrics", promhttp.HandlerFor(reg, promhttp.HandlerOpts{}))
+	mux.HandleFunc("POST /v1/pairings", s.createPairing)
+	mux.HandleFunc("POST /v1/pairings/claim", s.claimPairing)
 	s.Handler = s.withRequestID(s.withMetrics(mux))
 	return s
 }
