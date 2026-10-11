@@ -1,6 +1,6 @@
 # Architecture
 
-Updated C2. Update this file whenever a component joins the flow.
+Updated C3. Update this file whenever a component joins the flow.
 
 ## What it is
 
@@ -15,7 +15,7 @@ Locally, Docker Compose runs Postgres 16, golang-migrate, and the Go API (`/heal
 | Go API | pairing through retention, CORS, write limits; compose E2E | B1–B7 ([api.md](components/api.md), [pairing.md](components/pairing.md), [auth.md](components/auth.md), [delivery.md](components/delivery.md), [rate-limiter.md](components/rate-limiter.md), [follow-one-link.md](follow-one-link.md)) |
 | PostgreSQL | users, devices, pairing_codes, links, link_deliveries | A2 — schema in [database-schema.md](components/database-schema.md) |
 | Android client | pairing + `ACTION_SEND` share | C1–C2 ([android.md](components/android.md)) |
-| macOS agent | poll, open browser, ack | not started (C3) |
+| macOS agent | pair, 10s poll, default browser, ack, LaunchAgent, 0600 config | C3 ([agent.md](components/agent.md)) |
 | Next.js dashboard | pair, devices, history, delete account | not started (C4) |
 | Oracle VM | Ampere A1 Flex 1 OCPU / 6 GB Running; public HTTPS at D0 | A0 Ampere ([terraform.md](components/terraform.md)) |
 | CI | `go vet` + `go test ./...` on push/PR to `v2` | B1b ([ci-cd.md](components/ci-cd.md)) |
@@ -52,4 +52,5 @@ sequenceDiagram
 - Compose E2E: [testing.md](components/testing.md) (`tests/e2e/compose_api.sh`)
 - Suites: [testing.md](components/testing.md)
 - Android: [android.md](components/android.md) (`./gradlew test`)
+- Agent: [agent.md](components/agent.md) (`go test ./internal/agent/`, `tests/e2e/compose_agent.sh`)
 - CI: [ci-cd.md](components/ci-cd.md) (job `go-test`)

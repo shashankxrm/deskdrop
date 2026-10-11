@@ -4,10 +4,10 @@ overview: "App-first rebuild on empty `v2`: Go API + Postgres pull/ack, Android 
 todos:
   - id: a-skeleton
     content: "Phase A: A0 Oracle signup (record Ampere/micro/refused), repo contract, Compose + migrations"
-    status: pending
+    status: completed
   - id: b-api
     content: "Phase B: API + B1b Go test/vet CI (testcontainers, no testify); HMAC; B7 compose E2E; testing.md"
-    status: pending
+    status: completed
   - id: c-clients
     content: "Phase C: Android JUnit; agent + extend E2E in C3; dashboard Vitest/RTL + Playwright smoke in C4"
     status: pending

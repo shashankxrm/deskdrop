@@ -154,3 +154,6 @@ echo "$MET" | grep -q 'deskdrop_acks_total'
 echo "$MET" | grep -q 'deskdrop_pairings_total'
 
 echo "e2e ok link_id=$LINK_ID deliveries=1"
+
+echo "--- agent ---"
+"$ROOT/tests/e2e/compose_agent.sh"

@@ -57,7 +57,7 @@ tests/e2e/compose_api.sh
 # e2e ok link_id=... deliveries=1
 ```
 
-Needs Docker, `curl`, `python3`, and `psql` via `docker compose exec`. Trace and failure modes: [follow-one-link.md](../follow-one-link.md), [what-breaks-if.md](../what-breaks-if.md).
+Needs Docker, `curl`, `python3`, and `psql` via `docker compose exec`. Trace and failure modes: [follow-one-link.md](../follow-one-link.md), [what-breaks-if.md](../what-breaks-if.md). After the HTTP asserts, the same script runs [compose_agent.sh](../../tests/e2e/compose_agent.sh) (C3).
 
 ## Android (C1–C2)
 
@@ -69,3 +69,18 @@ cd android && ./gradlew test
 ```
 
 LAN pair + YouTube share: [android.md](android.md).
+
+## macOS agent (C3)
+
+Stdlib `testing` + `httptest` (no browser, no testify). Poll/ack/idempotency, 0600 config, 401 does not retry, 429 does.
+
+```bash
+go test ./internal/agent/
+go build -o /tmp/deskdrop-agent ./cmd/agent
+
+docker compose up --build -d
+tests/e2e/compose_agent.sh
+# e2e agent ok link_id=... opened=1
+```
+
+`compose_api.sh` also runs the agent script at the end. Sleep/wake and Gatekeeper: [agent.md](agent.md).

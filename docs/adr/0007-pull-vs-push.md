@@ -10,7 +10,7 @@ v1 pushed over Socket.IO and treated “emitted or queued in Redis” as deliver
 
 ## Decision
 
-The laptop **pulls** `GET /v1/links/pending` and **acks** `POST /v1/links/{id}/ack`. The API does not hold a socket, does not emit, and does not mark delivered on share. C3 will poll on start and on wake.
+The laptop **pulls** `GET /v1/links/pending` and **acks** `POST /v1/links/{id}/ack`. The API does not hold a socket, does not emit, and does not mark delivered on share. C3 polls on start, every 10s, and on wake (the ticker resumes).
 
 ## Alternatives
 
