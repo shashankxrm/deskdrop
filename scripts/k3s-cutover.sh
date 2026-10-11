@@ -9,6 +9,9 @@ K=(sudo k3s kubectl)
 NS=deskdrop
 HOST=shashank-dropdesk.duckdns.org
 ENV_FILE="$ROOT/deploy/prod/.env"
+# Pin a GitHub release. update.k3s.io / get.k3s.io are often unreachable from this VM.
+K3S_VERSION="${K3S_VERSION:-v1.37.1+k3s1}"
+K3S_INSTALL_SH="https://raw.githubusercontent.com/k3s-io/k3s/master/install.sh"
 
 if [[ ! -f "$ENV_FILE" ]]; then
   echo "missing $ENV_FILE" >&2
@@ -37,7 +40,7 @@ USERS_BEFORE="$("${COMPOSE[@]}" exec -T postgres psql -U deskdrop -d deskdrop -t
 echo "users before: $USERS_BEFORE"
 
 if [[ ! -x /usr/local/bin/k3s ]]; then
-  curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC="--disable=traefik" sh -
+  curl -sfL "$K3S_INSTALL_SH" | INSTALL_K3S_VERSION="$K3S_VERSION" INSTALL_K3S_EXEC="--disable=traefik" sh -
 fi
 sudo mkdir -p /home/ubuntu/.kube
 sudo cp /etc/rancher/k3s/k3s.yaml /home/ubuntu/.kube/config
@@ -89,7 +92,7 @@ fi
 
 "${COMPOSE[@]}" down
 # Traefik needs 80/443. Reinstall k3s without --disable=traefik (keeps data).
-curl -sfL https://get.k3s.io | sh -
+curl -sfL "$K3S_INSTALL_SH" | INSTALL_K3S_VERSION="$K3S_VERSION" sh -
 "${K[@]}" apply -k "$ROOT/deploy/k8s"
 "${K[@]}" apply -f "$ROOT/deploy/k8s/ingress.yaml"
 sed "s/ACME_EMAIL_PLACEHOLDER/${CADDY_EMAIL}/" "$ROOT/deploy/k8s/cert-issuer.yaml" | "${K[@]}" apply -f -

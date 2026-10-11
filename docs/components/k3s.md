@@ -61,6 +61,7 @@ Postgres must not appear in `sudo k3s kubectl get svc -A | grep NodePort` for po
 ## Failure modes
 
 - Empty-state k3s Postgres (no restore) loses pairing rows. Cutover dumps Compose first and aborts if `SELECT count(*) FROM users` changes.
+- `update.k3s.io` / `get.k3s.io` may be unreachable from OCI; the script installs a pinned GitHub release (`K3S_VERSION`).
 - Traefik vs Caddy on 80/443: install k3s with Traefik **disabled** until `compose down`.
 - `apply -k` before Traefik exists: Ingress/Middleware CRDs missing. Ingress is applied after Traefik is enabled.
 - `/metrics` 401: Traefik basic auth. Alloy does not need that path.
