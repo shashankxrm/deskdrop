@@ -10,13 +10,15 @@ deploy/prod/.env
 *.tfstate.*
 *.tfstate.backup
 .terraform/
-.terraform.lock.hcl
 crash.log
 crash.*.log
 override.tf
 override.tf.json
 *_override.tf
 *_override.tf.json
+*.tfvars
+!*.tfvars.example
+infra/backend.hcl
 
 # Binaries and build output
 bin/

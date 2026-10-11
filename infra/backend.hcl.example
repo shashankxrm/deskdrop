@@ -1,0 +1,12 @@
+# Copy to backend.hcl (gitignored). Create bucket deskdrop-tfstate in the
+# console first (chicken-egg), then:
+#   terraform init -backend-config=backend.hcl
+#
+# Auth is APIKey with ~/.oci/oci_api_key.pem (see backend.tf). Namespace:
+#   oci os ns get
+
+namespace    = "from oci os ns get"
+tenancy_ocid = "ocid1.tenancy.oc1..example"
+user_ocid    = "ocid1.user.oc1..example"
+fingerprint  = "xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx"
+region       = "us-phoenix-1"

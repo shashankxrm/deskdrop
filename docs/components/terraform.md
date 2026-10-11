@@ -1,6 +1,6 @@
 # Terraform / Oracle Cloud (A0)
 
-**A0 status: Ampere.** Always Free `VM.Standard.A1.Flex` is Running (1 OCPU / 6 GB). SSH: `uname -m` → `aarch64`. D0 is Compose+Caddy on this VM. D4 k3s migrate is in-scope. Do not run Terraform until D3.
+**A0 status: Ampere.** Always Free `VM.Standard.A1.Flex` is Running (1 OCPU / 6 GB). SSH: `uname -m` → `aarch64`. D0 is Compose+Caddy on this VM. D3 Terraform lives in [`infra/`](../../infra/). D4 k3s migrate is in-scope.
 
 | Field | Value |
 |---|---|
@@ -79,4 +79,73 @@ ssh -i ~/.ssh/<your-oci-key> ubuntu@<PUBLIC_IP> 'uname -m && nproc && free -h'
 
 If `uname -m` is `aarch64`, set outcome to `Ampere`. If `x86_64` and ~1 GB RAM, set outcome to `micro only`. If you never got a shell, set `refused` or keep retrying A1 in another AD **without** upgrading the account.
 
-D3 will add `terraform init` / `plan` / `apply` / `import` here. Do not run Terraform in A0.
+## D3 — Terraform of this VM
+
+Code: [`infra/`](../../infra/). Shape is locked to **A1 Flex 1 OCPU / 6 GB**. Do not change shape. State is **not** in git (`*.tfstate` gitignored). The instance, VCN, and subnet use `prevent_destroy` and `ignore_changes = all` so a later `plan` cannot replace the live box.
+
+**Never `terraform apply` on empty state.** That would try to create a second instance. Import first.
+
+### 0. API key and tfvars
+
+1. Console → Identity → API keys → add PEM (not the SSH key). Save it as `~/.oci/oci_api_key.pem` (the native `oci` backend and the provider both use this path).
+2. Copy [`infra/terraform.tfvars.example`](../../infra/terraform.tfvars.example) → `infra/terraform.tfvars`.
+3. Fill OCIDs from instance / VCN / subnet details. `public_ip` stays `137.131.14.30`. `duckdns_domain` is `shashank-dropdesk`. DuckDNS token from duckdns.org.
+
+Terraform **>= 1.12** is required (`backend "oci"`). State is native OCI Object Storage, not the S3-compat API.
+
+### 1. State bucket (once)
+
+Console → Object Storage → Create bucket **`deskdrop-tfstate`** in the same compartment (Always Free). Enable versioning if the console offers it. Then:
+
+```bash
+cd infra
+cp backend.hcl.example backend.hcl
+# set namespace (oci os ns get), tenancy/user OCIDs, fingerprint, region
+terraform init -backend-config=backend.hcl
+```
+
+[`infra/backend.tf`](../../infra/backend.tf) is already `backend "oci"` with `bucket = "deskdrop-tfstate"` and `private_key_path = "~/.oci/oci_api_key.pem"`. Until the bucket exists, rename `backend.tf` aside and `terraform init -backend=false` (local state still gitignored).
+
+### 2. Import (required)
+
+```bash
+cd infra
+terraform import oci_core_instance.deskdrop "$INSTANCE_OCID"
+terraform import oci_core_vcn.deskdrop "$VCN_OCID"
+terraform import oci_core_subnet.public "$SUBNET_OCID"
+terraform plan
+```
+
+Accept: **0 to destroy**, **0 to replace**. Expect creates: NSG + 22/80/443 rules, `deskdrop-backups`, DuckDNS refresh. If `deskdrop-tfstate` already exists from step 1:
+
+```bash
+terraform import oci_objectstorage_bucket.tfstate "$NAMESPACE/deskdrop-tfstate"
+```
+
+If plan wants to replace the instance, stop. Do not apply.
+
+### 3. Apply
+
+```bash
+terraform apply
+```
+
+Attach the new NSG `deskdrop` to the instance VNIC in the console (Terraform does not mutate the imported VNIC). Keep host iptables 80/443 as in [deploy-compose-caddy.md](../runbooks/deploy-compose-caddy.md).
+
+### 4. Verify
+
+```bash
+terraform plan   # should settle near empty (DuckDNS may refresh)
+curl -sfS https://shashank-dropdesk.duckdns.org/healthz
+ssh -i ~/Downloads/ssh-key-2026-10-10.key ubuntu@137.131.14.30 'uname -m'
+```
+
+`uname -m` must still be `aarch64`. Public IP must still be 137.131.14.30.
+
+## Failure modes (D3)
+
+- Empty-state apply creates a second A1 VM (capacity / Always Free). Import first.
+- Wrong image/source in config vs imported instance → replace. `ignore_changes = all` on instance/VCN/subnet is there to stop that.
+- DuckDNS token in git: `terraform.tfvars` is gitignored; never commit it.
+- Remote state 403 / init fail: `deskdrop-tfstate` missing, wrong `namespace` in `backend.hcl`, API key not at `~/.oci/oci_api_key.pem`, or Terraform older than 1.12 (native `oci` backend).
+- NSG created but not on the VNIC: 80/443 still depend on the existing security list + iptables until you attach it.

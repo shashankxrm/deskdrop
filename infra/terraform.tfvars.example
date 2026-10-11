@@ -1,0 +1,19 @@
+# Copy to terraform.tfvars (gitignored). Fill from OCI console / API keys.
+
+tenancy_ocid     = "ocid1.tenancy.oc1..example"
+user_ocid        = "ocid1.user.oc1..example"
+fingerprint      = "https://cloud.oracle.com/identity/domains → API keys"
+private_key_path = "~/.oci/oci_api_key.pem"
+region           = "us-phoenix-1" # home region from A0
+compartment_ocid = "ocid1.compartment.oc1..example"
+
+availability_domain = "paste from instance details (not AD-2)"
+instance_ocid       = "ocid1.instance.oc1..example"
+vcn_ocid            = "ocid1.vcn.oc1..example"
+subnet_ocid         = "ocid1.subnet.oc1..example"
+
+public_ip      = "137.131.14.30"
+duckdns_domain = "shashank-dropdesk"
+duckdns_token  = "from duckdns.org (never commit)"
+
+# ssh_ingress_cidr = "YOUR.IP.V4.0/32"
