@@ -52,6 +52,9 @@ export async function proxyToAPI(req: Request, path: string[]): Promise<Response
     const token = tokenFromClaimBody(body);
     if (upstream.ok && token) {
       res.cookies.set(sessionCookieName, token, sessionCookieAttrs);
+    } else {
+      const cookies = typeof upstream.headers.getSetCookie === "function" ? upstream.headers.getSetCookie() : [];
+      for (const c of cookies) res.headers.append("Set-Cookie", c);
     }
     return res;
   }

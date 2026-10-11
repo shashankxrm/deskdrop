@@ -1,6 +1,6 @@
 # Dashboard (Next.js)
 
-C4 is a Next.js app in `dashboard/`. It pairs as a **web** device, shows a QR for extra phone/laptop codes, lists devices and history, and can delete the account. The browser never stores the raw device token: claim JSON is stripped by the same-origin proxy; the API sets httpOnly `deskdrop_device`. See [ADR 0003](../adr/0003-cookie-vs-bearer.md) and [privacy.md](../privacy.md).
+C4 is a Next.js app in `dashboard/`. It pairs as a **web** device, shows a QR for extra phone/laptop codes, lists devices and history, and can delete the account. The browser never stores the raw device token: claim JSON is stripped by the same-origin proxy. Web claims omit `token` from JSON, so the proxy must copy the API `Set-Cookie` (`deskdrop_device`). Without that, Start a new pairing never leaves the pair screen (Playwright looks for **Devices**). See [ADR 0003](../adr/0003-cookie-vs-bearer.md) and [privacy.md](../privacy.md).
 
 Locally the dashboard is `http://127.0.0.1:3000` and proxies `/v1` to the Compose API. Production is same-origin at https://shashank-dropdesk.duckdns.org. How to pair: [connect.md](../connect.md) and `/connect`.
 
