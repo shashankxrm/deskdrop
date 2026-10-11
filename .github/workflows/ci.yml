@@ -113,28 +113,25 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/v2' && github.repository == 'shashankxrm/deskdrop'
     runs-on: ubuntu-latest
     timeout-minutes: 25
-    concurrency:
-      group: deploy-v2
-      cancel-in-progress: false
     steps:
-      - name: Skip without secrets
-        if: ${{ secrets.DEPLOY_SSH_KEY == '' }}
-        run: echo "Set DEPLOY_SSH_KEY, DEPLOY_HOST, DEPLOY_USER to enable deploy."
       - uses: actions/checkout@v4
-        if: ${{ secrets.DEPLOY_SSH_KEY != '' }}
-      - uses: webfactory/ssh-agent@v0.9.0
-        if: ${{ secrets.DEPLOY_SSH_KEY != '' }}
-        with:
-          ssh-private-key: ${{ secrets.DEPLOY_SSH_KEY }}
       - name: rsync and compose up
-        if: ${{ secrets.DEPLOY_SSH_KEY != '' }}
         env:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
         run: |
           set -euo pipefail
+          if [ -z "${DEPLOY_SSH_KEY}" ] || [ -z "${DEPLOY_HOST}" ] || [ -z "${DEPLOY_USER}" ]; then
+            echo "Skipping deploy; set DEPLOY_SSH_KEY, DEPLOY_HOST, DEPLOY_USER."
+            exit 0
+          fi
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
           ssh-keyscan -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts
-          rsync -az --delete \
+          rsync -az --delete -e 'ssh -i ~/.ssh/deploy_key -o IdentitiesOnly=yes' \
             --exclude '.git' \
             --exclude '.cursor' \
             --exclude 'dashboard/node_modules' \
@@ -143,6 +140,6 @@ jobs:
             --exclude 'deploy/prod/.env' \
             --exclude '.env' \
             ./ "${DEPLOY_USER}@${DEPLOY_HOST}:~/deskdrop/"
-          ssh -o IdentitiesOnly=yes "${DEPLOY_USER}@${DEPLOY_HOST}" \
+          ssh -i ~/.ssh/deploy_key -o IdentitiesOnly=yes "${DEPLOY_USER}@${DEPLOY_HOST}" \
             'cd ~/deskdrop && docker compose -f deploy/prod/compose.yaml --env-file deploy/prod/.env up --build -d'
           curl -fsS --retry 8 --retry-delay 5 "https://shashank-dropdesk.duckdns.org/healthz"
