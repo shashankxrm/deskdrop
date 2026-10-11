@@ -1,6 +1,6 @@
 # What breaks if
 
-Through C3 (API + Android + macOS agent). Dashboard C4 and public TLS D0 add rows later. Queue is Postgres ([ADR 0001](adr/0001-postgres-as-queue.md)); agents **pull** ([ADR 0007](adr/0007-pull-vs-push.md)).
+Through C4 (API + Android + macOS agent + dashboard). Public TLS is D0. Queue is Postgres ([ADR 0001](adr/0001-postgres-as-queue.md)); agents **pull** ([ADR 0007](adr/0007-pull-vs-push.md)).
 
 | Scenario | What happens | How to see |
 |---|---|---|
@@ -8,7 +8,7 @@ Through C3 (API + Android + macOS agent). Dashboard C4 and public TLS D0 add row
 | Laptop sleeps mid-ack | `link_deliveries.acked_at` stays NULL. Next `GET /v1/links/pending` returns the same row. Same process: agent retries **ack only** (no second `open`). Process died before ack: next launch opens again (at-least-once). Repeat ack is 204. | `go test ./internal/agent/ -run TestRunner_openOnceIfAckFails`; or share, sleep Mac 2+ min, one tab on wake. |
 | API process restarts | No in-memory queue. `links` / `link_deliveries` remain. In-memory claim + write buckets reset (brief extra burst, [ADR 0006](adr/0006-per-pod-rate-limit.md)). | Share, `docker compose restart api`, pull — same pending id. slog `listening` then `request_id` on the next pull. |
 | Duplicate share | Unique `(user_id, idempotency_key)` on `links`. Replay is 200, same `id`, no second `link_deliveries` fan-out. `deskdrop_shares_total` does not increment. | `POST /v1/links` twice with the same `Idempotency-Key`. |
-| Device token leaks | `DELETE /v1/devices/{id}` (`revokeDevice`) sets `devices.revoked_at`. Next Bearer/cookie is 401 (`requireAuth`). DB dump has HMAC (`devices.token_hash`), not the raw token. | Revoke, then `GET /v1/links/pending` → 401. |
+| Device token leaks | `DELETE /v1/devices/{id}` (`revokeDevice`) sets `devices.revoked_at`. Next Bearer/cookie is 401 (`requireAuth`). DB dump has HMAC (`devices.token_hash`), not the raw token. Dashboard unpair of the laptop → agent poll 401. | Dashboard **Unpair** on the laptop row; agent log `http 401`. |
 | VM dies | Restore from backup (D6). A0 Ampere box is Running; keep it that way. | n/a until D6 |
 | TLS cert expires | Caddy or cert-manager renew (D0 / D4). Local Compose is HTTP. | n/a until D0 |
 | 6th wrong claim / IP / min | `claimPairing` + in-memory window → 429 | [rate-limiter.md](components/rate-limiter.md) |

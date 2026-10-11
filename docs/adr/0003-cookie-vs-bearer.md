@@ -11,7 +11,7 @@ Agents (Android, macOS tray) and the dashboard must authenticate as devices. Bro
 ## Decision
 
 - **Bearer** `Authorization: Bearer <token>` for Android and the laptop agent. Token is stored in EncryptedSharedPreferences / a 0600 config file (C1/C3).
-- **Cookie** `deskdrop_device` (httpOnly, SameSite=Lax, Path=/) set when a **web** device claims a pairing code. Dashboard sends cookies same-origin (Caddy/Ingress later).
+- **Cookie** `deskdrop_device` (httpOnly, SameSite=Lax, Path=/) set when a **web** device claims a pairing code. The C4 dashboard proxies `/v1` so the browser is same-origin; D0 Caddy does that in production. Claim JSON `token` is stripped by the proxy.
 - If both are present, Bearer wins.
 - Lookup is HMAC of the token against `devices.token_hash` where `revoked_at IS NULL`. User id comes from that row.
 

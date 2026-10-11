@@ -32,10 +32,15 @@ coverage/
 coverage.txt
 *.coverprofile
 
-# Node / Next.js (dashboard, later)
+# Node / Next.js
 node_modules/
 .next/
 .turbo/
+playwright-report/
+test-results/
+blob-report/
+dashboard/test-results/
+dashboard/playwright-report/
 
 # Android / Java
 *.apk

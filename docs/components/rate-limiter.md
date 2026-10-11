@@ -27,7 +27,7 @@ Successful claims are not counted toward the claim window. Claim is not the crea
 
 ## Failure modes
 
-- Empty `CORS_ORIGINS`: dashboard on another origin cannot read JSON (until C4 sets the env).
+- Empty `CORS_ORIGINS`: fine for curl/agents. The C4 dashboard is same-origin via a `/v1` proxy on `:3000` (D0 Caddy will be `/` + `/v1`). Do not set `*`.
 - Burst across two pods is up to 2× the numbers above.
 - `hey` against create will 429; that is the demo, not a bug.
 

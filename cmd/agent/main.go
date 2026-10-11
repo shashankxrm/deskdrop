@@ -31,6 +31,8 @@ func run(args []string) int {
 	switch cmd {
 	case "pair":
 		return cmdPair(rest)
+	case "invite":
+		return cmdInvite(rest)
 	case "run":
 		return cmdRun(rest)
 	case "install":
@@ -49,6 +51,7 @@ func run(args []string) int {
 const usage = `deskdrop-agent: pair a Mac as a laptop device, poll pending links, open the default browser, ack.
 
   deskdrop-agent pair [-api URL] [-code CODE] [-name NAME] [-config PATH]
+  deskdrop-agent invite [-config PATH]
   deskdrop-agent run  [-config PATH] [-once] [-poll 10s] [-open-file PATH]
   deskdrop-agent install [-config PATH]
   deskdrop-agent uninstall
@@ -123,6 +126,35 @@ func cmdPair(args []string) int {
 		return 1
 	}
 	fmt.Printf("paired device_id=%s config=%s\n", got.DeviceID, path)
+	return 0
+}
+
+func cmdInvite(args []string) int {
+	fs := flag.NewFlagSet("invite", flag.ContinueOnError)
+	fs.SetOutput(os.Stderr)
+	cfgPath := configFlag(fs)
+	if err := fs.Parse(args); err != nil {
+		return 2
+	}
+	path, err := resolveConfig(*cfgPath)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return 1
+	}
+	cfg, err := agent.Load(path)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "not paired (%v); run: deskdrop-agent pair\n", err)
+		return 1
+	}
+	cli := &agent.Client{Base: cfg.APIBase, Token: cfg.Token}
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	code, err := cli.CreatePairing(ctx)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return 1
+	}
+	fmt.Println(code)
 	return 0
 }
 

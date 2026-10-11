@@ -84,3 +84,18 @@ tests/e2e/compose_agent.sh
 ```
 
 `compose_api.sh` also runs the agent script at the end. Sleep/wake and Gatekeeper: [agent.md](agent.md).
+
+## Dashboard (C4)
+
+Vitest + React Testing Library (pairing code + device list). Playwright smoke: Start a new pairing → device list, against local Compose on `:8080`. Not in GitHub Actions until D1.
+
+```bash
+docker compose up --build -d
+cd dashboard
+npm install
+npx playwright install chromium
+npm test
+npm run test:e2e
+```
+
+Manual QR / unpair / delete: [dashboard.md](dashboard.md). Privacy copy: [privacy.md](../privacy.md).

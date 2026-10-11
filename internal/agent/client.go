@@ -51,6 +51,14 @@ func (c *Client) http() *http.Client {
 	return &http.Client{Timeout: 15 * time.Second}
 }
 
+func (c *Client) CreatePairing(ctx context.Context) (string, error) {
+	var out struct {
+		Code string `json:"code"`
+	}
+	err := c.doJSON(ctx, http.MethodPost, "/v1/pairings", []byte("{}"), c.Token != "", &out)
+	return out.Code, err
+}
+
 func (c *Client) Claim(ctx context.Context, code, name string) (ClaimResult, error) {
 	code = NormalizeCode(code)
 	body, err := json.Marshal(map[string]string{

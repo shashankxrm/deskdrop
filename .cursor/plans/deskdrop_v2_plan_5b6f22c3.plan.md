@@ -10,7 +10,7 @@ todos:
     status: completed
   - id: c-clients
     content: "Phase C: Android JUnit; agent + extend E2E in C3; dashboard Vitest/RTL + Playwright smoke in C4"
-    status: pending
+    status: completed
   - id: d-platform
     content: "Phase D: D0 public deploy; D1 CI runs all suites + compose E2E; GHCR/deploy; Terraform; k3s migrate; backups"
     status: pending
