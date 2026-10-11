@@ -22,7 +22,7 @@ Every push and pull request to `v2` runs Go, dashboard Vitest/build, Android uni
 
 ## Secrets (deploy)
 
-Set on the GitHub repo (Settings → Secrets). Empty `DEPLOY_SSH_KEY` skips the job.
+Set on the GitHub repo (Settings → Secrets). Empty `DEPLOY_SSH_KEY` skips the rsync steps (job-level `if` cannot read `secrets`).
 
 - `DEPLOY_HOST` — VM public IP or DuckDNS hostname
 - `DEPLOY_USER` — `ubuntu`
@@ -37,7 +37,7 @@ Set on the GitHub repo (Settings → Secrets). Empty `DEPLOY_SSH_KEY` skips the 
 
 - Any of `go-test` / `dashboard` / `android` / `agent` / `e2e` red blocks merge (required checks) and deploy.
 - Playwright 403 in a sandbox: CI is a real Ubuntu VM; install Chromium with `--with-deps`.
-- Deploy skipped: secrets not set, or the event is a pull_request.
+- Deploy skipped: `DEPLOY_SSH_KEY` is empty (job still runs a no-op step; GitHub forbids `secrets` in a job-level `if`), or the event is a pull_request.
 - Deploy would delete VM `.env` if rsync `--delete` did not exclude it — the workflow excludes `deploy/prod/.env`.
 
 ## Verify or demo

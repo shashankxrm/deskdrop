@@ -110,22 +110,24 @@ jobs:
   deploy:
     name: deploy
     needs: [go-test, dashboard, android, agent, e2e]
-    if: >
-      github.event_name == 'push' &&
-      github.ref == 'refs/heads/v2' &&
-      github.repository == 'shashankxrm/deskdrop' &&
-      secrets.DEPLOY_SSH_KEY != ''
+    if: github.event_name == 'push' && github.ref == 'refs/heads/v2' && github.repository == 'shashankxrm/deskdrop'
     runs-on: ubuntu-latest
     timeout-minutes: 25
     concurrency:
       group: deploy-v2
       cancel-in-progress: false
     steps:
+      - name: Skip without secrets
+        if: ${{ secrets.DEPLOY_SSH_KEY == '' }}
+        run: echo "Set DEPLOY_SSH_KEY, DEPLOY_HOST, DEPLOY_USER to enable deploy."
       - uses: actions/checkout@v4
+        if: ${{ secrets.DEPLOY_SSH_KEY != '' }}
       - uses: webfactory/ssh-agent@v0.9.0
+        if: ${{ secrets.DEPLOY_SSH_KEY != '' }}
         with:
           ssh-private-key: ${{ secrets.DEPLOY_SSH_KEY }}
       - name: rsync and compose up
+        if: ${{ secrets.DEPLOY_SSH_KEY != '' }}
         env:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
