@@ -18,6 +18,7 @@ Every push and pull request to `v2` runs Go, dashboard Vitest/build, Android uni
 | `android` | `./gradlew :app:testDebugUnitTest` |
 | `agent` | `go build ./cmd/agent` |
 | `e2e` | `docker compose up --build -d`, `tests/e2e/compose_api.sh` (includes agent), Playwright |
+| `images` | distroless/non-root API + dashboard; `scripts/check-images.sh`; push `ghcr.io/<owner>/deskdrop/{api,dashboard}:v2` on push to `v2` |
 | `deploy` | push to `v2` only; rsync + `docker compose -f deploy/prod/compose.yaml up --build -d`; `curl /healthz` |
 
 ## Secrets (deploy)
@@ -31,7 +32,7 @@ Set on the GitHub repo (Settings → Secrets). Empty `DEPLOY_SSH_KEY` skips the 
 ## Alternatives
 
 - Postgres service container instead of testcontainers: two ways to boot Postgres. testcontainers match local `go test`.
-- GHCR images: D2. This job still `docker compose build` on the VM.
+- Live VM still `docker compose build`s from the Dockerfiles (does not pull GHCR yet). D4 can switch the VM to `image: ghcr.io/...`.
 
 ## Failure modes
 
@@ -40,13 +41,15 @@ Set on the GitHub repo (Settings → Secrets). Empty `DEPLOY_SSH_KEY` skips the 
 - Playwright misses **Devices** after compose E2E: pairing create burst is 5/IP; E2E already used 4. Restart `api` before Playwright so the in-memory limiter resets.
 - Android `Failed to find package 'tools'`: ubuntu-latest already has the SDK; do not install the obsolete `tools` package.
 - Deploy skipped: the step sees empty `DEPLOY_*` env (GitHub forbids `secrets` in any `if`) and exits 0, or the event is a pull_request.
+- GHCR package is private until you set it public (Package settings → Change visibility).
+- API healthcheck must use exec-form `wget` (distroless has no shell).
 - Deploy would delete VM `.env` if rsync `--delete` did not exclude it — the workflow excludes `deploy/prod/.env`.
 
 ## Verify or demo
 
 Workflow file: [`.github/workflows/ci.yml`](../../.github/workflows/ci.yml)
 
-Required check names: **go-test**, **dashboard**, **android**, **agent**, **e2e**.
+Required check names: **go-test**, **dashboard**, **android**, **agent**, **e2e**, **images**.
 
 ```bash
 go vet ./...
@@ -60,6 +63,18 @@ cd dashboard && npx playwright install chromium && npm run test:e2e
 ```
 
 After this file is on `origin/v2`: [Actions](https://github.com/shashankxrm/deskdrop/actions). A PR that breaks a suite must show that job failed. After merge, `curl -sfS https://shashank-dropdesk.duckdns.org/healthz`.
+
+## Images (D2)
+
+Multi-stage **distroless** API (`static-debian12:nonroot`) and dashboard (`nodejs22-debian12:nonroot`). Busybox `wget` is copied into the API image only so Compose healthchecks work without a shell.
+
+```bash
+docker build -f deploy/compose/Dockerfile.api -t deskdrop-api:local .
+docker build -f deploy/compose/Dockerfile.dashboard -t deskdrop-dashboard:local .
+./scripts/check-images.sh deskdrop-api:local deskdrop-dashboard:local
+docker inspect -f '{{.Config.User}}' deskdrop-api:local   # nonroot
+docker pull ghcr.io/shashankxrm/deskdrop/api:v2
+```
 
 ## Releases (D0)
 

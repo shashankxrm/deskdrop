@@ -118,9 +118,43 @@ jobs:
         if: failure()
         run: docker compose logs --tail 200
 
+  images:
+    name: images
+    needs: [go-test, dashboard, android, agent, e2e]
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: read
+      packages: write
+    env:
+      API_IMAGE: ghcr.io/${{ github.repository }}/api
+      DASH_IMAGE: ghcr.io/${{ github.repository }}/dashboard
+    steps:
+      - uses: actions/checkout@v4
+      - name: build
+        run: |
+          docker build -f deploy/compose/Dockerfile.api -t "$API_IMAGE:${GITHUB_SHA}" -t deskdrop-api:ci .
+          docker build -f deploy/compose/Dockerfile.dashboard -t "$DASH_IMAGE:${GITHUB_SHA}" -t deskdrop-dashboard:ci .
+      - name: non-root and no secrets in image
+        run: ./scripts/check-images.sh deskdrop-api:ci deskdrop-dashboard:ci
+      - name: push to GHCR
+        run: |
+          set -euo pipefail
+          if [ "${GITHUB_EVENT_NAME}" != push ] || [ "${GITHUB_REF}" != refs/heads/v2 ]; then
+            echo "Skipping GHCR push (PR or non-v2)."
+            exit 0
+          fi
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+          docker tag "deskdrop-api:ci" "$API_IMAGE:v2"
+          docker tag "deskdrop-dashboard:ci" "$DASH_IMAGE:v2"
+          docker push "$API_IMAGE:${GITHUB_SHA}"
+          docker push "$API_IMAGE:v2"
+          docker push "$DASH_IMAGE:${GITHUB_SHA}"
+          docker push "$DASH_IMAGE:v2"
+
   deploy:
     name: deploy
-    needs: [go-test, dashboard, android, agent, e2e]
+    needs: [go-test, dashboard, android, agent, e2e, images]
     if: github.event_name == 'push' && github.ref == 'refs/heads/v2' && github.repository == 'shashankxrm/deskdrop'
     runs-on: ubuntu-latest
     timeout-minutes: 25

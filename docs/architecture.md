@@ -58,4 +58,4 @@ sequenceDiagram
 - Dashboard: [dashboard.md](components/dashboard.md) (`cd dashboard && npm test` / `npm run test:e2e`)
 - Prod: [deploy-compose-caddy.md](runbooks/deploy-compose-caddy.md) (`curl https://HOST/healthz`)
 - Grafana: [grafana.md](components/grafana.md)
-- CI: [ci-cd.md](components/ci-cd.md) (jobs `go-test`, `dashboard`, `android`, `agent`, `e2e`; deploy-on-merge)
+- CI: [ci-cd.md](components/ci-cd.md) (jobs including `images` → GHCR; deploy-on-merge)

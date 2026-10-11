@@ -56,11 +56,7 @@ services:
       # Comma-separated browser Origins. Empty = no ACAO (curl/agents unchanged). C4 dashboard will set this.
       CORS_ORIGINS: ""
     healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          "wget -qO- http://127.0.0.1:8080/healthz >/dev/null",
-        ]
+      test: ["CMD", "/usr/bin/wget", "-q", "-O", "-", "http://127.0.0.1:8080/healthz"]
       interval: 5s
       timeout: 3s
       retries: 10
