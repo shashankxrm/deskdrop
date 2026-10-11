@@ -64,6 +64,8 @@ Postgres must not appear in `sudo k3s kubectl get svc -A | grep NodePort` for po
 - `update.k3s.io` / `get.k3s.io` may be unreachable from OCI; the script installs a pinned GitHub release (`K3S_VERSION`).
 - Traefik vs Caddy on 80/443: install k3s with Traefik **disabled** until `compose down`.
 - `apply -k` before Traefik exists: Ingress/Middleware CRDs missing. Ingress is applied after Traefik is enabled.
+- kubectl kustomize cannot load files outside `deploy/k8s/`; SQL copies live in `deploy/k8s/migrations/` (keep in sync with `migrations/`).
+- GHCR `:v2` must include **linux/arm64**. amd64-only images CrashLoop with `exec format error` on Ampere; cutover used locally built `deskdrop-api:local` until CI published a multi-arch list.
 - `/metrics` 401: Traefik basic auth. Alloy does not need that path.
 - 1 OCPU / 6 GB: keep Grafana in Cloud, not in-cluster Grafana.
 - Per-pod rate limit is 2× after this ([ADR 0006](0006-per-pod-rate-limit.md)).

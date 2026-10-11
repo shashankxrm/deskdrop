@@ -10,8 +10,8 @@ resources:
 configMapGenerator:
   - name: migrations
     files:
-      - 000001_init.up.sql=../../migrations/000001_init.up.sql
-      - 000001_init.down.sql=../../migrations/000001_init.down.sql
+      - migrations/000001_init.up.sql
+      - migrations/000001_init.down.sql
 generatorOptions:
   disableNameSuffixHash: true
 images:

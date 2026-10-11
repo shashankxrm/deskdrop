@@ -18,7 +18,7 @@ Every push and pull request to `v2` runs Go, dashboard Vitest/build, Android uni
 | `android` | `./gradlew :app:testDebugUnitTest` |
 | `agent` | `go build ./cmd/agent` |
 | `e2e` | `docker compose up --build -d`, `tests/e2e/compose_api.sh` (includes agent), Playwright |
-| `images` | distroless/non-root API + dashboard; `scripts/check-images.sh`; push `ghcr.io/<owner>/deskdrop/{api,dashboard}:v2` on push to `v2` |
+| `images` | distroless/non-root API + dashboard; `scripts/check-images.sh`; push **linux/amd64,linux/arm64** `ghcr.io/<owner>/deskdrop/{api,dashboard}:v2` on push to `v2` (Ampere needs arm64) |
 | `deploy` | push to `v2` only; rsync; if k3s: `kubectl apply -k deploy/k8s` + Ingress + rollout; else Compose `up --build -d`; `curl /healthz` |
 
 ## Secrets (deploy)
@@ -32,7 +32,7 @@ Set on the GitHub repo (Settings → Secrets). Empty `DEPLOY_SSH_KEY` skips the 
 ## Alternatives
 
 - Postgres service container instead of testcontainers: two ways to boot Postgres. testcontainers match local `go test`.
-- k3s pulls `ghcr.io/shashankxrm/deskdrop/{api,dashboard}:v2`. Compose rollback still builds from Dockerfiles.
+- k3s on Ampere pulls `linux/arm64` from the GHCR manifest list. A `:v2` that is amd64-only crashes with `exec format error`. Compose rollback still builds on the box.
 
 ## Failure modes
 
@@ -73,7 +73,8 @@ docker build -f deploy/compose/Dockerfile.api -t deskdrop-api:local .
 docker build -f deploy/compose/Dockerfile.dashboard -t deskdrop-dashboard:local .
 ./scripts/check-images.sh deskdrop-api:local deskdrop-dashboard:local
 docker inspect -f '{{.Config.User}}' deskdrop-api:local   # nonroot
-docker pull ghcr.io/shashankxrm/deskdrop/api:v2
+docker pull --platform linux/arm64 ghcr.io/shashankxrm/deskdrop/api:v2
+docker image inspect ghcr.io/shashankxrm/deskdrop/api:v2 --format '{{.Architecture}}'  # arm64 on Ampere
 ```
 
 ## Releases (D0)
