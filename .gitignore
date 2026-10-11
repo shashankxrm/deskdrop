@@ -58,6 +58,9 @@ local.properties
 *.dSYM/
 *.app
 
+# Cursor (local plans; not product)
+.cursor/
+
 # OS / editor
 .DS_Store
 Thumbs.db

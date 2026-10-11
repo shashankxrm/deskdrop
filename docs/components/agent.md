@@ -61,4 +61,4 @@ launchctl list | grep deskdrop
 # or: xattr -d com.apple.quarantine /tmp/deskdrop-agent
 ```
 
-GitHub Actions agent compile is D1.
+CI job **agent** compiles `./cmd/agent`. Compose drive is in **e2e**. See [ci-cd.md](ci-cd.md).

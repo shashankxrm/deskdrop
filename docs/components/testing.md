@@ -21,7 +21,7 @@ go test ./...
 
 Docker must be running for `TestReadyz_ok`.
 
-CI job **go-test** (B1b) runs `go vet ./...` and `go test ./...` on every push/PR to `v2`. See [ci-cd.md](ci-cd.md).
+CI (D1) runs `go vet ./...` and `go test ./...` as job **go-test**, plus dashboard, Android, agent compile, compose E2E, and Playwright. See [ci-cd.md](ci-cd.md).
 
 `github.com/stretchr/testify` may appear as an **indirect** module of testcontainers-go. Our tests must not import it.
 
@@ -49,7 +49,7 @@ Later steps add pairing/delivery tests in the same `go test ./...` invocation.
 
 ## Compose E2E (B7)
 
-HTTP-only: pair phone + laptop, share, pull (twice still one row), ack, double ack still one `link_deliveries` row, replayed `Idempotency-Key` is 200. Not in GitHub Actions until D1.
+HTTP-only: pair phone + laptop, share, pull (twice still one row), ack, double ack still one `link_deliveries` row, replayed `Idempotency-Key` is 200. CI job **e2e** runs this script.
 
 ```bash
 docker compose up --build -d
@@ -61,7 +61,7 @@ Needs Docker, `curl`, `python3`, and `psql` via `docker compose exec`. Trace and
 
 ## Android (C1–C2)
 
-JUnit 4 on the JVM (no device required). Full-jitter backoff, pairing-code normalize, **table-driven URL parse**, share retry reuses `Idempotency-Key`. Gradle is not in GitHub Actions until D1.
+JUnit 4 on the JVM (no device required). Full-jitter backoff, pairing-code normalize, **table-driven URL parse**, share retry reuses `Idempotency-Key`. CI job **android**.
 
 ```bash
 echo "sdk.dir=$HOME/Library/Android/sdk" > android/local.properties
@@ -87,7 +87,7 @@ tests/e2e/compose_agent.sh
 
 ## Dashboard (C4)
 
-Vitest + React Testing Library (pairing code + device list). Playwright smoke: Start a new pairing → device list, against local Compose on `:8080`. Not in GitHub Actions until D1.
+Vitest + React Testing Library (pairing code + device list). Playwright smoke: Start a new pairing → device list, against local Compose on `:8080`. CI jobs **dashboard** (Vitest + `next build`) and **e2e** (Playwright).
 
 ```bash
 docker compose up --build -d

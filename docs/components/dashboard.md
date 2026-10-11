@@ -46,4 +46,4 @@ go build -o /tmp/deskdrop-agent ./cmd/agent
 
 Unpair the laptop row, then in the agent log the next poll is `http 401`. Delete account → type `DELETE` → pair screen again.
 
-GitHub Actions Vitest/Playwright is D1.
+CI: jobs **dashboard** (Vitest + build) and **e2e** (Playwright). See [ci-cd.md](ci-cd.md).

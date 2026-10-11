@@ -67,4 +67,4 @@ curl -sS http://127.0.0.1:8080/v1/links/pending -H "Authorization: Bearer $LAPTO
 curl -sS http://127.0.0.1:8080/metrics | grep deskdrop_shares_total
 ```
 
-GitHub Actions Gradle is D1.
+CI job **android** runs `./gradlew :app:testDebugUnitTest`. See [ci-cd.md](ci-cd.md).
