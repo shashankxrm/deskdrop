@@ -4,10 +4,10 @@ The phone is a `phone` device. C1 claims a pairing code and stores the token in 
 
 ## Why this way
 
-- The API is HTTP on the LAN for Compose. The user types `http://<computer-lan-ip>:8080`. Emulator: `http://10.0.2.2:8080`.
+- Production API URL is `https://shashank-dropdesk.duckdns.org` (pre-filled). Local Compose: `http://<lan-ip>:8080`. Emulator: `http://10.0.2.2:8080`. See [connect.md](../connect.md).
 - Token at rest is AndroidX Security crypto (AES-256). The UI shows device id, never the token.
 - Claim and share retries use **full jitter** backoff on 429/5xx/IO. 404/409/410/4xx do not retry.
-- QR payload is the pairing code (`ABCD-EFGH`), optional `deskdrop:` prefix.
+- QR payload is `https://host/connect?code=ABCD-EFGH` (fills API URL + code). Older `deskdrop:https://host|CODE` still parses. Scan auto-claims. Pair stays enabled so you can switch chains without Forget.
 - YouTube and similar apps put a URL (sometimes with a title) in `EXTRA_TEXT` / `EXTRA_SUBJECT`. Non-http(s) is rejected in-app.
 - One UUID `Idempotency-Key` per share tap (kept across rotation). HTTP retries reuse that key so a retried intent does not insert a second `links` row.
 

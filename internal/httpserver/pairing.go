@@ -109,14 +109,20 @@ func (s *Server) claimPairing(w http.ResponseWriter, r *http.Request) {
 		s.rejectClaim(w, r, http.StatusNotFound, "not found")
 		return
 	}
-	if usedAt != nil {
-		s.rejectClaim(w, r, http.StatusConflict, "already used")
-		return
-	}
 	if time.Now().UTC().After(expiresAt) {
 		s.rejectClaim(w, r, http.StatusGone, "expired")
 		return
 	}
+	var deviceN int
+	if err := tx.QueryRow(r.Context(), `SELECT count(*) FROM devices WHERE user_id = $1`, userID).Scan(&deviceN); err != nil {
+		writeErr(w, http.StatusInternalServerError, "internal")
+		return
+	}
+	if deviceN >= 8 {
+		s.rejectClaim(w, r, http.StatusConflict, "already used")
+		return
+	}
+	_ = usedAt
 
 	token, err := randomToken()
 	if err != nil {
@@ -144,17 +150,20 @@ func (s *Server) claimPairing(w http.ResponseWriter, r *http.Request) {
 
 	s.pairings.Inc()
 	if body.Type == "web" {
-		http.SetCookie(w, sessionCookie(token))
+		http.SetCookie(w, s.sessionCookie(token))
 	}
-	writeJSON(w, http.StatusCreated, map[string]any{
-		"token":     token,
+	resp := map[string]any{
 		"device_id": deviceID.String(),
 		"type":      body.Type,
-	})
+	}
+	if body.Type != "web" {
+		resp["token"] = token
+	}
+	writeJSON(w, http.StatusCreated, resp)
 }
 
 func (s *Server) rejectClaim(w http.ResponseWriter, r *http.Request, status int, msg string) {
-	n := s.claimFails.recordFailure(clientIP(r), time.Now())
+	n := s.claimFails.recordFailure(s.clientIP(r), time.Now())
 	if n >= claimFailLimit+1 {
 		writeErr(w, http.StatusTooManyRequests, "rate limited")
 		return

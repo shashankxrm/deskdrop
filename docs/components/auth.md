@@ -6,7 +6,7 @@ Every authenticated request is a **device**. User id is loaded from `devices` vi
 
 - Fixes v1’s `userId` in the body.
 - Revoke is an immediate `revoked_at` — no waiting for a JWT to expire.
-- Web gets an httpOnly cookie; agents get Bearer.
+- Web gets an httpOnly cookie; agents get Bearer. Web claim JSON **omits** `token` (cookie only). `COOKIE_SECURE=true` in production.
 
 ## Endpoints
 

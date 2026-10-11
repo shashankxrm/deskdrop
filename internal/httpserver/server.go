@@ -31,6 +31,8 @@ type Server struct {
 	pairCreateLimit *tokenBucket
 	shareLimit      *tokenBucket
 	corsOrigins     map[string]struct{}
+	cookieSecure    bool
+	trustProxy      bool
 	http.Handler
 }
 
@@ -94,6 +96,9 @@ func New(log *slog.Logger, pool *pgxpool.Pool, pepper string, corsOrigins ...str
 	s.Handler = s.withRequestID(s.withMetrics(s.withSecurity(s.withCORS(s.withWriteLimit(mux)))))
 	return s
 }
+
+func (s *Server) SetCookieSecure(v bool) { s.cookieSecure = v }
+func (s *Server) SetTrustProxy(v bool)   { s.trustProxy = v }
 
 func (s *Server) healthz(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")

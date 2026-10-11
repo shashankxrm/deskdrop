@@ -75,6 +75,14 @@ func TestNormalizeCode(t *testing.T) {
 	if !CodeComplete("abcd-efgh") || CodeComplete("abc") {
 		t.Fatal("complete")
 	}
+	inv := ParseInvite("https://shashank-dropdesk.duckdns.org/connect?code=abcd-efgh")
+	if inv.API != "https://shashank-dropdesk.duckdns.org" || inv.Code != "ABCD-EFGH" {
+		t.Fatalf("%+v", inv)
+	}
+	pipe := ParseInvite("deskdrop:https://shashank-dropdesk.duckdns.org|abcd-efgh")
+	if pipe.API != "https://shashank-dropdesk.duckdns.org" || pipe.Code != "ABCD-EFGH" {
+		t.Fatalf("%+v", pipe)
+	}
 }
 
 func TestLaunchAgentPlist(t *testing.T) {

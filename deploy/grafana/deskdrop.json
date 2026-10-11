@@ -1,0 +1,39 @@
+{
+  "title": "deskdrop",
+  "uid": "deskdrop-v2",
+  "schemaVersion": 39,
+  "timezone": "browser",
+  "refresh": "30s",
+  "panels": [
+    {
+      "type": "stat",
+      "title": "Shares",
+      "gridPos": { "h": 6, "w": 6, "x": 0, "y": 0 },
+      "targets": [{ "expr": "deskdrop_shares_total", "refId": "A" }]
+    },
+    {
+      "type": "stat",
+      "title": "Acks",
+      "gridPos": { "h": 6, "w": 6, "x": 6, "y": 0 },
+      "targets": [{ "expr": "deskdrop_acks_total", "refId": "A" }]
+    },
+    {
+      "type": "stat",
+      "title": "Ack rate (acks / shares)",
+      "gridPos": { "h": 6, "w": 6, "x": 12, "y": 0 },
+      "targets": [{ "expr": "deskdrop_acks_total / clamp_min(deskdrop_shares_total, 1)", "refId": "A" }]
+    },
+    {
+      "type": "timeseries",
+      "title": "Request latency p95",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 6 },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(deskdrop_http_request_duration_seconds_bucket[5m])))",
+          "refId": "A",
+          "legendFormat": "p95"
+        }
+      ]
+    }
+  ]
+}

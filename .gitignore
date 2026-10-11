@@ -2,6 +2,8 @@
 .env
 .env.*
 !.env.example
+!deploy/prod/env.example
+deploy/prod/.env
 
 # Terraform state and plugins (remote backend in D3; never commit state)
 *.tfstate

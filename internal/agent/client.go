@@ -3,12 +3,14 @@ package agent
 import (
 	"bytes"
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -44,11 +46,29 @@ func (e *APIError) Error() string {
 	return fmt.Sprintf("http %d: %s", e.Status, e.Message)
 }
 
+var defaultHTTP = sync.OnceValue(func() *http.Client {
+	t := http.DefaultTransport.(*http.Transport).Clone()
+	t.DisableKeepAlives = true
+	t.ForceAttemptHTTP2 = false
+	t.TLSHandshakeTimeout = 30 * time.Second
+	t.ResponseHeaderTimeout = 45 * time.Second
+	tlsCfg := t.TLSClientConfig
+	if tlsCfg == nil {
+		tlsCfg = &tls.Config{}
+	} else {
+		tlsCfg = tlsCfg.Clone()
+	}
+	tlsCfg.NextProtos = []string{"http/1.1"}
+	t.TLSClientConfig = tlsCfg
+	t.TLSNextProto = map[string]func(authority string, c *tls.Conn) http.RoundTripper{}
+	return &http.Client{Timeout: 60 * time.Second, Transport: t}
+})
+
 func (c *Client) http() *http.Client {
 	if c.HTTP != nil {
 		return c.HTTP
 	}
-	return &http.Client{Timeout: 15 * time.Second}
+	return defaultHTTP()
 }
 
 func (c *Client) CreatePairing(ctx context.Context) (string, error) {
@@ -101,10 +121,6 @@ func (c *Client) doJSON(ctx context.Context, method, path string, body []byte, a
 			return err
 		}
 		if !ShouldRetry(api.Status) {
-			return err
-		}
-		// Do not replay POSTs on a lost response (claim is single-use).
-		if method != http.MethodGet && api.Status == 0 {
 			return err
 		}
 		last = err

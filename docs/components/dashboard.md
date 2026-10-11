@@ -2,11 +2,11 @@
 
 C4 is a Next.js app in `dashboard/`. It pairs as a **web** device, shows a QR for extra phone/laptop codes, lists devices and history, and can delete the account. The browser never stores the raw device token: claim JSON is stripped by the same-origin proxy; the API sets httpOnly `deskdrop_device`. See [ADR 0003](../adr/0003-cookie-vs-bearer.md) and [privacy.md](../privacy.md).
 
-Locally the dashboard is `http://127.0.0.1:3000` and proxies `/v1` to the Compose API (`API_BASE`, default `http://127.0.0.1:8080`). D0 will put `/` and `/v1` on the same Caddy origin.
+Locally the dashboard is `http://127.0.0.1:3000` and proxies `/v1` to the Compose API. Production is same-origin at https://shashank-dropdesk.duckdns.org. How to pair: [connect.md](../connect.md) and `/connect`.
 
 ## Why this way
 
-- Start a new pairing: bootstrap code, immediately claim it as `web`, then mint a **second** code + QR for the phone or `deskdrop-agent pair`. That is the code you type on the phone (the first code is already spent by the dashboard).
+- Start a new pairing: bootstrap code, immediately claim it as `web`, then mint a **second** code + QR. Phone and Mac both claim that same QR until it expires (~3 minutes). The first code is already spent by the dashboard.
 - Join: paste a code minted by an already-paired device.
 - Unpair (`DELETE /v1/devices/{id}`) on a laptop row: the agent’s next poll is 401.
 - Delete account wipes the chain and clears the cookie.

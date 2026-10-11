@@ -1,6 +1,6 @@
 # What breaks if
 
-Through C4 (API + Android + macOS agent + dashboard). Public TLS is D0. Queue is Postgres ([ADR 0001](adr/0001-postgres-as-queue.md)); agents **pull** ([ADR 0007](adr/0007-pull-vs-push.md)).
+Through D0 (public HTTPS). Queue is Postgres ([ADR 0001](adr/0001-postgres-as-queue.md)); agents **pull** ([ADR 0007](adr/0007-pull-vs-push.md)).
 
 | Scenario | What happens | How to see |
 |---|---|---|
@@ -10,7 +10,7 @@ Through C4 (API + Android + macOS agent + dashboard). Public TLS is D0. Queue is
 | Duplicate share | Unique `(user_id, idempotency_key)` on `links`. Replay is 200, same `id`, no second `link_deliveries` fan-out. `deskdrop_shares_total` does not increment. | `POST /v1/links` twice with the same `Idempotency-Key`. |
 | Device token leaks | `DELETE /v1/devices/{id}` (`revokeDevice`) sets `devices.revoked_at`. Next Bearer/cookie is 401 (`requireAuth`). DB dump has HMAC (`devices.token_hash`), not the raw token. Dashboard unpair of the laptop → agent poll 401. | Dashboard **Unpair** on the laptop row; agent log `http 401`. |
 | VM dies | Restore from backup (D6). A0 Ampere box is Running; keep it that way. | n/a until D6 |
-| TLS cert expires | Caddy or cert-manager renew (D0 / D4). Local Compose is HTTP. | n/a until D0 |
+| TLS cert expires | Caddy renews Let’s Encrypt. If DuckDNS A record or port 80 breaks, HTTPS fails. | `curl -vI https://HOST/healthz`; `docker compose ... logs caddy` |
 | 6th wrong claim / IP / min | `claimPairing` + in-memory window → 429 | [rate-limiter.md](components/rate-limiter.md) |
 | 6th pairing create / IP burst | `withWriteLimit` token bucket → 429 | same |
 | Disallowed browser Origin | Request still runs; **no** `Access-Control-Allow-Origin` | `curl -H 'Origin: https://evil.example' /healthz` |

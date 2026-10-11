@@ -30,7 +30,8 @@ class PairActivity : AppCompatActivity() {
 
     private val qr = registerForActivityResult(ScanContract()) { result ->
         val text = result.contents ?: return@registerForActivityResult
-        code.setText(PairingCode.normalize(text.removePrefix("deskdrop:")))
+        applyInvite(text)
+        if (canPair()) startPair()
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -53,8 +54,9 @@ class PairActivity : AppCompatActivity() {
         status = findViewById(R.id.status)
         pair = findViewById(R.id.pair)
         unpair = findViewById(R.id.unpair)
-        if (store.baseUrl.isNotEmpty()) {
-            apiUrl.setText(store.baseUrl)
+        when {
+            store.baseUrl.isNotEmpty() -> apiUrl.setText(store.baseUrl)
+            else -> apiUrl.setText(getString(R.string.api_url_default))
         }
         findViewById<Button>(R.id.paste).setOnClickListener { pasteCode() }
         findViewById<Button>(R.id.scan).setOnClickListener {
@@ -79,8 +81,31 @@ class PairActivity : AppCompatActivity() {
         val clip = getSystemService(ClipboardManager::class.java) ?: return
         val t = clip.primaryClip?.getItemAt(0)?.coerceToText(this)?.toString().orEmpty()
         if (t.isNotBlank()) {
-            code.setText(PairingCode.normalize(t))
+            applyInvite(t)
         }
+    }
+
+    private fun applyInvite(raw: String) {
+        val inv = PairingInviteParse.parse(raw)
+        if (!inv.apiUrl.isNullOrBlank()) {
+            apiUrl.setText(inv.apiUrl)
+        }
+        if (PairingCode.looksComplete(inv.code)) {
+            code.setText(inv.code)
+        }
+        status.text =
+            when {
+                PairingCode.looksComplete(inv.code) && !inv.apiUrl.isNullOrBlank() ->
+                    "QR: ${inv.apiUrl} · ${inv.code}"
+                PairingCode.looksComplete(inv.code) -> "QR code ${inv.code} (check API URL)"
+                else -> "QR did not contain a pairing code. Use the site code, not the URL letters."
+            }
+    }
+
+    private fun canPair(): Boolean {
+        val base = apiUrl.text?.toString().orEmpty().trim()
+        return (base.startsWith("http://") || base.startsWith("https://")) &&
+            PairingCode.looksComplete(code.text?.toString().orEmpty())
     }
 
     private fun startPair() {
@@ -105,6 +130,7 @@ class PairActivity : AppCompatActivity() {
                     if (res.status == 201 && !res.token.isNullOrEmpty() && !res.deviceId.isNullOrEmpty()) {
                         store.saveClaim(base, res.token, res.deviceId)
                         renderPaired()
+                        Toast.makeText(this, R.string.paired, Toast.LENGTH_SHORT).show()
                     } else {
                         status.text = "Claim failed (${res.status}): ${res.error ?: "see pairing.md"}"
                     }
@@ -159,7 +185,7 @@ class PairActivity : AppCompatActivity() {
         unpair.visibility = if (paired) View.VISIBLE else View.GONE
         findViewById<TextInputLayout>(R.id.shareBox).visibility = if (paired) View.VISIBLE else View.GONE
         findViewById<Button>(R.id.sendLink).visibility = if (paired) View.VISIBLE else View.GONE
-        pair.isEnabled = !paired
+        pair.isEnabled = true
         if (paired) {
             status.text = getString(R.string.paired) + "\n" + store.deviceId
         }

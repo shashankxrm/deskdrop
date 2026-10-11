@@ -11,7 +11,8 @@
 | Availability domain | not AD-2 (AD-2 returned out of host capacity); copy the AD from instance details |
 | Instance OCID | copy from instance details |
 | Public IPv4 | 137.131.14.30 (ephemeral; private 10.0.0.95) |
-| Notes | Ubuntu user `ubuntu`. SSH key is the wizard-generated private key (`ssh-key-2026-10-10.key`), not `id_ed25519`. Keep the VM Running (idle reclaim). No Docker/k3s yet. |
+| Public hostname | https://shashank-dropdesk.duckdns.org |
+| Notes | Ubuntu `ubuntu`. SSH wizard key `ssh-key-2026-10-10.key`. Keep Running. **D0:** Compose+Caddy on this VM ([deploy-compose-caddy.md](../runbooks/deploy-compose-caddy.md)). Postgres not published. NSG must allow 80/443. |
 
 D3 will Terraform-ify this shape. D4 (Compose → k3s) runs because outcome is `Ampere`.
 

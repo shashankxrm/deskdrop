@@ -51,6 +51,7 @@ func run(args []string) int {
 const usage = `deskdrop-agent: pair a Mac as a laptop device, poll pending links, open the default browser, ack.
 
   deskdrop-agent pair [-api URL] [-code CODE] [-name NAME] [-config PATH]
+      default -api is https://shashank-dropdesk.duckdns.org (or DESKDROP_API)
   deskdrop-agent invite [-config PATH]
   deskdrop-agent run  [-config PATH] [-once] [-poll 10s] [-open-file PATH]
   deskdrop-agent install [-config PATH]
@@ -59,6 +60,13 @@ const usage = `deskdrop-agent: pair a Mac as a laptop device, poll pending links
 Config is 0600 under the OS user config dir (macOS: ~/Library/Application Support/deskdrop/config.json).
 Unsigned binary: System Settings → Privacy & Security → Open Anyway.
 `
+
+func defaultAPI() string {
+	if v := strings.TrimSpace(os.Getenv("DESKDROP_API")); v != "" {
+		return v
+	}
+	return "https://shashank-dropdesk.duckdns.org"
+}
 
 func configFlag(fs *flag.FlagSet) *string {
 	return fs.String("config", "", "path to config.json (default: user config dir)")
@@ -74,8 +82,8 @@ func resolveConfig(p string) (string, error) {
 func cmdPair(args []string) int {
 	fs := flag.NewFlagSet("pair", flag.ContinueOnError)
 	fs.SetOutput(os.Stderr)
-	api := fs.String("api", "http://127.0.0.1:8080", "API base URL")
-	code := fs.String("code", "", "pairing code from a phone or curl")
+	api := fs.String("api", defaultAPI(), "API base URL")
+	code := fs.String("code", "", "pairing code or deskdrop:https://host|CODE QR payload")
 	name := fs.String("name", "", "device name (default: hostname)")
 	cfgPath := configFlag(fs)
 	if err := fs.Parse(args); err != nil {
@@ -96,7 +104,12 @@ func cmdPair(args []string) int {
 		}
 		c = line
 	}
-	if !agent.CodeComplete(c) {
+	inv := agent.ParseInvite(c)
+	apiBase := strings.TrimRight(*api, "/")
+	if inv.API != "" {
+		apiBase = inv.API
+	}
+	if !agent.CodeComplete(inv.Code) {
 		fmt.Fprintln(os.Stderr, "need an 8-character pairing code")
 		return 1
 	}
@@ -107,10 +120,10 @@ func cmdPair(args []string) int {
 			devName = "Mac"
 		}
 	}
-	cli := &agent.Client{Base: strings.TrimRight(*api, "/")}
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	cli := &agent.Client{Base: apiBase}
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
-	got, err := cli.Claim(ctx, c, devName)
+	got, err := cli.Claim(ctx, inv.Code, devName)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		return 1

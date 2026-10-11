@@ -1,0 +1,28 @@
+{
+	email {$CADDY_EMAIL}
+}
+
+{$DESKDROP_HOST} {
+	encode gzip
+
+	handle /metrics {
+		basic_auth {
+			{$METRICS_USER} {$METRICS_HASH}
+		}
+		reverse_proxy api:8080
+	}
+
+	handle /healthz {
+		reverse_proxy api:8080
+	}
+	handle /readyz {
+		reverse_proxy api:8080
+	}
+	handle /v1/* {
+		reverse_proxy api:8080
+	}
+
+	handle {
+		reverse_proxy dashboard:3000
+	}
+}

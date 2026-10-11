@@ -122,9 +122,9 @@ func TestPairing_bootstrapClaimAndIdempotent(t *testing.T) {
 		t.Fatal("plaintext token stored")
 	}
 
-	again := doJSON(t, srv, http.MethodPost, "/v1/pairings/claim", "", "", claimBody)
-	if again.Code != http.StatusConflict {
-		t.Fatalf("second claim status=%d want 409 body=%s", again.Code, again.Body.String())
+	phone := doJSON(t, srv, http.MethodPost, "/v1/pairings/claim", "", "", `{"code":"`+cre.Code+`","type":"phone","name":"pixel"}`)
+	if phone.Code != http.StatusCreated {
+		t.Fatalf("second claim (phone, same QR) status=%d want 201 body=%s", phone.Code, phone.Body.String())
 	}
 
 	metrics := httptest.NewRecorder()
@@ -132,8 +132,8 @@ func TestPairing_bootstrapClaimAndIdempotent(t *testing.T) {
 	if !strings.Contains(metrics.Body.String(), "deskdrop_pairings_total") {
 		t.Fatalf("missing pairings counter: %s", metrics.Body.String())
 	}
-	if !strings.Contains(metrics.Body.String(), "deskdrop_pairings_total 1") {
-		t.Fatalf("pairings counter not 1: %s", metrics.Body.String())
+	if !strings.Contains(metrics.Body.String(), "deskdrop_pairings_total 2") {
+		t.Fatalf("pairings counter not 2: %s", metrics.Body.String())
 	}
 }
 
@@ -223,6 +223,40 @@ func TestPairing_authenticatedSecondDevice(t *testing.T) {
 	bad := doJSON(t, srv, http.MethodPost, "/v1/pairings", "", "Bearer not-a-real-token", "")
 	if bad.Code != http.StatusUnauthorized {
 		t.Fatalf("bad bearer status=%d", bad.Code)
+	}
+}
+
+func TestPairing_webOmitsTokenSetsCookie(t *testing.T) {
+	srv, _ := pairingServer(t)
+	cre := doJSON(t, srv, http.MethodPost, "/v1/pairings", "", "", "")
+	var c struct {
+		Code string `json:"code"`
+	}
+	_ = json.Unmarshal(cre.Body.Bytes(), &c)
+	rec := doJSON(t, srv, http.MethodPost, "/v1/pairings/claim", "", "", `{"code":"`+c.Code+`","type":"web","name":"dash"}`)
+	if rec.Code != http.StatusCreated {
+		t.Fatalf("status=%d body=%s", rec.Code, rec.Body.String())
+	}
+	var cl struct {
+		Token    string `json:"token"`
+		DeviceID string `json:"device_id"`
+		Type     string `json:"type"`
+	}
+	_ = json.Unmarshal(rec.Body.Bytes(), &cl)
+	if cl.Token != "" {
+		t.Fatal("web claim must omit token from JSON")
+	}
+	if cl.Type != "web" || cl.DeviceID == "" {
+		t.Fatalf("%+v", cl)
+	}
+	found := false
+	for _, ck := range rec.Result().Cookies() {
+		if ck.Name == cookieName && ck.Value != "" && ck.HttpOnly {
+			found = true
+		}
+	}
+	if !found {
+		t.Fatal("missing httpOnly session cookie")
 	}
 }
 

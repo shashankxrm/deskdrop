@@ -225,8 +225,18 @@ func TestShare_lateLaptopMissesOldLink(t *testing.T) {
 
 func TestShare_webCannotPull(t *testing.T) {
 	srv, _ := pairingServer(t)
-	web, _, _ := pairDevice(t, srv, "web")
-	if doJSON(t, srv, http.MethodGet, "/v1/links/pending", "", "Bearer "+web, "").Code != http.StatusForbidden {
+	_, _, rec := pairDevice(t, srv, "web")
+	var ck *http.Cookie
+	for _, c := range rec.Result().Cookies() {
+		if c.Name == cookieName {
+			ck = c
+			break
+		}
+	}
+	if ck == nil {
+		t.Fatal("web cookie")
+	}
+	if doJSON(t, srv, http.MethodGet, "/v1/links/pending", "", "", "", ck).Code != http.StatusForbidden {
 		t.Fatal("web pull")
 	}
 }

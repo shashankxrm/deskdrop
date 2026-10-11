@@ -14,12 +14,14 @@ The laptop is a `laptop` device. C3 is a Go binary (`cmd/agent`): claim a pairin
 
 ```text
 deskdrop-agent pair [-api URL] [-code CODE] [-name NAME] [-config PATH]
+      default -api https://shashank-dropdesk.duckdns.org (override DESKDROP_API)
+deskdrop-agent invite [-config PATH]
 deskdrop-agent run  [-config PATH] [-once] [-poll 10s] [-open-file PATH]
 deskdrop-agent install [-config PATH]
 deskdrop-agent uninstall
 ```
 
-Default API for local Compose: `http://127.0.0.1:8080`. Tray title `DD` (darwin). Recent URLs are in the config file and the menu.
+Default `-api` is production HTTPS. For local Compose pass `-api http://127.0.0.1:8080`. `-code` accepts the QR payload (`deskdrop:https://host|ABCD-EFGH`). Tray title `DD` (darwin). Recent URLs are in the config file and the menu. See [connect.md](../connect.md).
 
 ## Failure modes
 

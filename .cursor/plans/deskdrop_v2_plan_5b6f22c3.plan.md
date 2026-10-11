@@ -13,7 +13,7 @@ todos:
     status: completed
   - id: d-platform
     content: "Phase D: D0 public deploy; D1 CI runs all suites + compose E2E; GHCR/deploy; Terraform; k3s migrate; backups"
-    status: pending
+    status: in_progress
   - id: e-ship
     content: "Phase E: publish beta numbers from D0 onward; recruiter README; v2 default branch by Jan 1"
     status: pending

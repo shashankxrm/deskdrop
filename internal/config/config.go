@@ -12,6 +12,8 @@ type Config struct {
 	DatabaseURL       string
 	DeviceTokenPepper string
 	CORSOrigins       []string
+	CookieSecure      bool
+	TrustProxy        bool
 }
 
 func Load() (Config, error) {
@@ -20,6 +22,8 @@ func Load() (Config, error) {
 		DatabaseURL:       strings.TrimSpace(os.Getenv("DATABASE_URL")),
 		DeviceTokenPepper: strings.TrimSpace(os.Getenv("DEVICE_TOKEN_PEPPER")),
 		CORSOrigins:       SplitCORSOrigins(os.Getenv("CORS_ORIGINS")),
+		CookieSecure:      envBool("COOKIE_SECURE"),
+		TrustProxy:        envBool("TRUST_PROXY"),
 	}
 	if c.HTTPAddr == "" {
 		c.HTTPAddr = ":8080"
@@ -47,4 +51,9 @@ func SplitCORSOrigins(raw string) []string {
 		}
 	}
 	return out
+}
+
+func envBool(key string) bool {
+	v := strings.TrimSpace(strings.ToLower(os.Getenv(key)))
+	return v == "1" || v == "true" || v == "yes"
 }

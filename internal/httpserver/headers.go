@@ -67,7 +67,7 @@ func (s *Server) withWriteLimit(next http.Handler) http.Handler {
 		case r.Method == http.MethodPost && r.URL.Path == "/v1/links":
 			bucket = s.shareLimit
 		}
-		if bucket != nil && !bucket.allow(clientIP(r), time.Now()) {
+		if bucket != nil && !bucket.allow(s.clientIP(r), time.Now()) {
 			writeErr(w, http.StatusTooManyRequests, "rate limited")
 			return
 		}

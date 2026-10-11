@@ -36,4 +36,14 @@ go test ./...
 # A PR that breaks a test must show go-test as failed.
 ```
 
+## Releases (D0)
+
+Unsigned macOS agent and optional Android debug APK. Checksums in `dist/SHA256SUMS`. Deploy-on-merge is D1.
+
+```bash
+./scripts/release-checksums.sh
+cd dist && shasum -a 256 -c SHA256SUMS
+gh release create v2-d0 dist/* --title 'v2 closed beta' --notes 'Unsigned Mac: Open Anyway.'
+```
+
 D1 will add Next, Gradle, Playwright, compose E2E, and deploy-on-merge to this doc.

@@ -140,7 +140,15 @@ export default function HomePage() {
           Sign out
         </button>
       </p>
-      {invite ? <InviteQR code={invite.code} expiresAt={invite.expires_at} /> : null}
+      {invite ? (
+        <InviteQR
+          code={invite.code}
+          origin={typeof window !== "undefined" ? window.location.origin : ""}
+          expiresAt={invite.expires_at}
+        />
+      ) : (
+        <p>Tap <strong>Add a phone or laptop</strong> for a QR (phone + Mac). Pair the laptop before you share.</p>
+      )}
       <h2>Devices</h2>
       <DeviceList devices={devices} onRevoke={(id) => void onRevoke(id)} busyId={busyId} />
       <h2>History</h2>

@@ -13,6 +13,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {children}
         <footer>
           <p>
+            <a href="/connect">Connect</a>
+            {" · "}
             <a href="/privacy">Privacy</a>
           </p>
         </footer>

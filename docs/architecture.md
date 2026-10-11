@@ -1,12 +1,12 @@
 # Architecture
 
-Updated C4. Update this file whenever a component joins the flow.
+Updated D0. Update this file whenever a component joins the flow.
 
 ## What it is
 
 deskdrop queues a URL from an Android share until a paired laptop agent pulls it, opens the default browser, and acks. One user is one pairing chain. Production target is a single Always Free Oracle **Ampere** VM (A0 recorded in [terraform.md](components/terraform.md)).
 
-Locally, Docker Compose runs Postgres 16, golang-migrate, and the Go API (`/healthz`, `/readyz`, `/metrics`). The dashboard is `npm run dev` in `dashboard/` on port 3000 (proxies `/v1`).
+Locally, Docker Compose runs Postgres 16, golang-migrate, and the Go API. The dashboard is `npm run dev` on port 3000 (proxies `/v1`). Production (D0) is Compose + Caddy on the Ampere VM: `https://<duckdns>/` dashboard, `/v1` API, `/metrics` basic-auth.
 
 ## Components
 
@@ -17,8 +17,9 @@ Locally, Docker Compose runs Postgres 16, golang-migrate, and the Go API (`/heal
 | Android client | pairing + `ACTION_SEND` share | C1–C2 ([android.md](components/android.md)) |
 | macOS agent | pair, 10s poll, default browser, ack, LaunchAgent, 0600 config | C3 ([agent.md](components/agent.md)) |
 | Next.js dashboard | web pair + QR, devices, history, delete account, /privacy | C4 ([dashboard.md](components/dashboard.md), [privacy.md](privacy.md)) |
-| Oracle VM | Ampere A1 Flex 1 OCPU / 6 GB Running; public HTTPS at D0 | A0 Ampere ([terraform.md](components/terraform.md)) |
-| CI | `go vet` + `go test ./...` on push/PR to `v2` | B1b ([ci-cd.md](components/ci-cd.md)) |
+| Oracle VM | Ampere A1 Flex 1 OCPU / 6 GB; Compose+Caddy HTTPS (DuckDNS) | D0 ([terraform.md](components/terraform.md), [deploy-compose-caddy.md](runbooks/deploy-compose-caddy.md), [scaling.md](scaling.md)) |
+| Grafana | Cloud free, Alloy remote_write; shares / acks / ack rate / p95 | D0 ([grafana.md](components/grafana.md)) |
+| CI | `go vet` + `go test ./...` on push/PR to `v2` | B1b ([ci-cd.md](components/ci-cd.md)); releases [release-checksums.sh](../scripts/release-checksums.sh) |
 
 Queue choice: [ADR 0001 — Postgres as the delivery queue](adr/0001-postgres-as-queue.md). Pull vs push: [ADR 0007](adr/0007-pull-vs-push.md). Ack: [ADR 0004](adr/0004-at-least-once-ack.md). History/TTL: [ADR 0005](adr/0005-cursor-history-ttl.md). Limits: [ADR 0006](adr/0006-per-pod-rate-limit.md).
 
@@ -53,5 +54,8 @@ sequenceDiagram
 - Suites: [testing.md](components/testing.md)
 - Android: [android.md](components/android.md) (`./gradlew test`)
 - Agent: [agent.md](components/agent.md) (`go test ./internal/agent/`, `tests/e2e/compose_agent.sh`)
+- Connect phone + laptop: [connect.md](connect.md)
 - Dashboard: [dashboard.md](components/dashboard.md) (`cd dashboard && npm test` / `npm run test:e2e`)
-- CI: [ci-cd.md](components/ci-cd.md) (job `go-test`)
+- Prod: [deploy-compose-caddy.md](runbooks/deploy-compose-caddy.md) (`curl https://HOST/healthz`)
+- Grafana: [grafana.md](components/grafana.md)
+- CI: [ci-cd.md](components/ci-cd.md) (job `go-test`; release checksums)

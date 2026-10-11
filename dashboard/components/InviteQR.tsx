@@ -5,29 +5,39 @@ import { qrPayload } from "@/lib/pairing";
 
 type Props = {
   code: string;
+  origin?: string;
   expiresAt?: string;
 };
 
-export function InviteQR({ code, expiresAt }: Props) {
+export function InviteQR({ code, origin = "", expiresAt }: Props) {
   const [src, setSrc] = useState("");
+  const payload = qrPayload(code, origin);
   useEffect(() => {
     let cancelled = false;
     import("qrcode").then((QR) =>
-      QR.toDataURL(qrPayload(code), { margin: 1, width: 220 }).then((url) => {
+      QR.toDataURL(payload, { margin: 1, width: 220 }).then((url) => {
         if (!cancelled) setSrc(url);
       }),
     );
     return () => {
       cancelled = true;
     };
-  }, [code]);
+  }, [payload]);
   return (
     <figure>
       {src ? <img src={src} width={220} height={220} alt={`QR for ${code}`} /> : <p>QR…</p>}
       <figcaption>
         <code data-testid="invite-code">{code}</code>
         {expiresAt ? <span> expires {expiresAt}</span> : null}
-        <p>Phone: scan or paste. Laptop: <code>deskdrop-agent pair -code {code}</code></p>
+        <ol>
+          <li>
+            Phone: Scan this QR, then <strong>Pair as phone</strong>. It sets API URL to{" "}
+            <code>{origin || "this site"}</code> and the code above.
+          </li>
+          <li>
+            Mac: <code>deskdrop-agent pair -code {code}</code> then <code>deskdrop-agent run</code>
+          </li>
+        </ol>
       </figcaption>
     </figure>
   );

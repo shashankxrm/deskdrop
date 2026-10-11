@@ -38,6 +38,8 @@ func run(args []string) int {
 	defer pool.Close()
 
 	api := httpserver.New(slog.Default(), pool, cfg.DeviceTokenPepper, cfg.CORSOrigins...)
+	api.SetCookieSecure(cfg.CookieSecure)
+	api.SetTrustProxy(cfg.TrustProxy)
 	retainCtx, retainStop := context.WithCancel(context.Background())
 	defer retainStop()
 	go api.RunRetention(retainCtx)

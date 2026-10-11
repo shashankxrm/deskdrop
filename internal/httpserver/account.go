@@ -20,6 +20,7 @@ func (s *Server) deleteAccount(w http.ResponseWriter, r *http.Request) {
 		MaxAge:   -1,
 		HttpOnly: true,
 		SameSite: http.SameSiteLaxMode,
+		Secure:   s.cookieSecure,
 	})
 	w.WriteHeader(http.StatusNoContent)
 }

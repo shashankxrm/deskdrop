@@ -13,8 +13,13 @@ export function codeComplete(raw: string): boolean {
   return normalizeCode(raw).length === 9;
 }
 
-export function qrPayload(code: string): string {
-  return `deskdrop:${normalizeCode(code)}`;
+export function qrPayload(code: string, origin = ""): string {
+  const c = normalizeCode(code);
+  const o = origin.replace(/\/$/, "");
+  if (o.startsWith("http://") || o.startsWith("https://")) {
+    return `${o}/connect?code=${encodeURIComponent(c)}`;
+  }
+  return `deskdrop:${c}`;
 }
 
 export function stripClaimToken(body: unknown): unknown {

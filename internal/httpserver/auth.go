@@ -76,7 +76,7 @@ func tokenFromRequest(r *http.Request) (string, bool) {
 	return c.Value, true
 }
 
-func sessionCookie(token string) *http.Cookie {
+func (s *Server) sessionCookie(token string) *http.Cookie {
 	return &http.Cookie{
 		Name:     cookieName,
 		Value:    token,
@@ -84,7 +84,7 @@ func sessionCookie(token string) *http.Cookie {
 		MaxAge:   cookieMaxAge,
 		HttpOnly: true,
 		SameSite: http.SameSiteLaxMode,
-		Secure:   false, // D0 sets HTTPS; local Compose is HTTP
+		Secure:   s.cookieSecure,
 	}
 }
 

@@ -14,7 +14,10 @@ export function PairPanel({ busy, error, onStart, onJoin }: Props) {
   return (
     <section>
       <h1>deskdrop</h1>
-      <p>Pair this browser as a web device. No password.</p>
+      <p>
+        Start here on the computer. Then scan the QR with the phone (it fills the public HTTPS URL). Then pair the
+        Mac with the same code. <a href="/connect">Full steps</a>.
+      </p>
       {error ? <p role="alert">{error}</p> : null}
       <p>
         <button type="button" disabled={busy} onClick={onStart}>

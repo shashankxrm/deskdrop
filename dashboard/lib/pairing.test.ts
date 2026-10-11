@@ -10,8 +10,11 @@ describe("normalizeCode", () => {
     expect(codeComplete("abcd-efgh")).toBe(true);
     expect(codeComplete("abc")).toBe(false);
   });
-  it("qr payload uses deskdrop prefix", () => {
+  it("qr payload is a connect URL so scanners keep host and code", () => {
     expect(qrPayload("abcd efgh")).toBe("deskdrop:ABCD-EFGH");
+    expect(qrPayload("abcd efgh", "https://shashank-dropdesk.duckdns.org")).toBe(
+      "https://shashank-dropdesk.duckdns.org/connect?code=ABCD-EFGH",
+    );
   });
 });
 

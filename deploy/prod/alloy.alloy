@@ -1,0 +1,17 @@
+prometheus.scrape "deskdrop" {
+  targets = [{
+    __address__ = "api:8080",
+  }]
+  metrics_path = "/metrics"
+  forward_to   = [prometheus.remote_write.gc.receiver]
+}
+
+prometheus.remote_write "gc" {
+  endpoint {
+    url = sys.env("GRAFANA_CLOUD_RW_URL")
+    basic_auth {
+      username = sys.env("GRAFANA_CLOUD_USER")
+      password = sys.env("GRAFANA_CLOUD_TOKEN")
+    }
+  }
+}
