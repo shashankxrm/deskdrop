@@ -37,6 +37,8 @@ Set on the GitHub repo (Settings → Secrets). Empty `DEPLOY_SSH_KEY` skips the 
 
 - Any of `go-test` / `dashboard` / `android` / `agent` / `e2e` red blocks merge (required checks) and deploy.
 - Playwright 403 in a sandbox: CI is a real Ubuntu VM; install Chromium with `--with-deps`.
+- Playwright misses **Devices** after compose E2E: pairing create burst is 5/IP; E2E already used 4. Restart `api` before Playwright so the in-memory limiter resets.
+- Android `Failed to find package 'tools'`: ubuntu-latest already has the SDK; do not install the obsolete `tools` package.
 - Deploy skipped: the step sees empty `DEPLOY_*` env (GitHub forbids `secrets` in any `if`) and exits 0, or the event is a pull_request.
 - Deploy would delete VM `.env` if rsync `--delete` did not exclude it — the workflow excludes `deploy/prod/.env`.
 

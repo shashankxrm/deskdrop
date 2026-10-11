@@ -57,9 +57,11 @@ jobs:
         with:
           distribution: temurin
           java-version: "17"
-      - uses: android-actions/setup-android@v3
       - name: unit tests
         working-directory: android
+        env:
+          ANDROID_HOME: /usr/local/lib/android/sdk
+          ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
         run: ./gradlew :app:testDebugUnitTest --no-daemon
 
   agent:
@@ -94,6 +96,15 @@ jobs:
         run: docker compose up --build -d
       - name: compose API + agent E2E
         run: tests/e2e/compose_api.sh
+      - name: reset in-memory pairing limiter
+        run: |
+          docker compose restart api
+          for i in $(seq 1 60); do
+            curl -sfS http://127.0.0.1:8080/readyz && exit 0
+            sleep 1
+          done
+          echo "api not ready after restart" >&2
+          exit 1
       - name: Playwright
         working-directory: dashboard
         env:
