@@ -1,0 +1,16 @@
+# Apply after substituting ACME_EMAIL_PLACEHOLDER from deploy/prod/.env CADDY_EMAIL.
+# Do not commit a real address.
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-prod
+spec:
+  acme:
+    email: ACME_EMAIL_PLACEHOLDER
+    server: https://acme-v02.api.letsencrypt.org/directory
+    privateKeySecretRef:
+      name: letsencrypt-prod
+    solvers:
+      - http01:
+          ingress:
+            class: traefik

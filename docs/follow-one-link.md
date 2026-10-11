@@ -1,12 +1,12 @@
 # Follow one link
 
-Updated D0 (public HTTPS).
+Updated D4 (k3s + Traefik).
 
 Handlers live in `internal/httpserver`. Tables are migration `000001_init`. Every JSON response (and `/healthz`) carries `X-Request-Id`; JSON logs use field `request_id`. Counters: `deskdrop_pairings_total`, `deskdrop_shares_total`, `deskdrop_pulls_total`, `deskdrop_acks_total`. Latency histogram: `deskdrop_http_request_duration_seconds{method,code,route}`.
 
 Automated trace: `tests/e2e/compose_api.sh` (HTTP + agent binary). Pull vs push: [ADR 0007](adr/0007-pull-vs-push.md).
 
-0. **Pair.** Same handlers. Production origin is `https://<duckdns>` (Caddy). Web claim sets a **Secure** httpOnly cookie and **omits** `token` from JSON. Phone API URL and `deskdrop-agent pair -api` must be that HTTPS origin. [deploy-compose-caddy.md](runbooks/deploy-compose-caddy.md).
+0. **Pair.** Same handlers. Production origin is `https://<duckdns>` (Traefik + cert-manager; Compose+Caddy was D0). Web claim sets a **Secure** httpOnly cookie and **omits** `token` from JSON. Phone API URL and `deskdrop-agent pair -api` must be that HTTPS origin. [k3s.md](components/k3s.md).
 1. **Share.** Android `ACTION_SEND` (C2) or curl `POST /v1/links` (`shareLink`) with `Idempotency-Key` (new UUID per tap; HTTP retries reuse it). Body `userId` ignored. Non-http(s) rejected in the app. `links` + `link_deliveries` in one transaction. New share → 201 and `deskdrop_shares_total`. Replay → 200, same `id`. [delivery.md](components/delivery.md), [android.md](components/android.md).
 2. **Queue.** Rows in Postgres, not Redis. Fan-out only to laptops already paired ([ADR 0004](adr/0004-at-least-once-ack.md)).
 3. **Pull.** Laptop `GET /v1/links/pending` (`pendingLinks`) uses `link_deliveries_pending_by_device_idx`. Increments `deskdrop_pulls_total`. Phone/web 403. Pull does **not** ack — a second pull still returns the same row (sleep-mid-ack). Agent poll: 10s.

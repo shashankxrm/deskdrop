@@ -1,6 +1,6 @@
 # CI/CD
 
-Every push and pull request to `v2` runs Go, dashboard Vitest/build, Android unit tests, agent compile, compose E2E, and Playwright. Merge to `v2` deploys the live Compose stack when deploy secrets are set. Forks cannot deploy (no secrets). No Windows `.exe`. k3d-in-CI is Post-v2 (A0 is Ampere).
+Every push and pull request to `v2` runs Go, dashboard Vitest/build, Android unit tests, agent compile, compose E2E, and Playwright. Merge to `v2` deploys: **k3s `kubectl apply`** if the VM is running k3s, otherwise Compose. Forks cannot deploy (no secrets). No Windows `.exe`. k3d-in-CI is Post-v2 (A0 is Ampere).
 
 ## Why this way
 
@@ -19,7 +19,7 @@ Every push and pull request to `v2` runs Go, dashboard Vitest/build, Android uni
 | `agent` | `go build ./cmd/agent` |
 | `e2e` | `docker compose up --build -d`, `tests/e2e/compose_api.sh` (includes agent), Playwright |
 | `images` | distroless/non-root API + dashboard; `scripts/check-images.sh`; push `ghcr.io/<owner>/deskdrop/{api,dashboard}:v2` on push to `v2` |
-| `deploy` | push to `v2` only; rsync + `docker compose -f deploy/prod/compose.yaml up --build -d`; `curl /healthz` |
+| `deploy` | push to `v2` only; rsync; if k3s: `kubectl apply -k deploy/k8s` + Ingress + rollout; else Compose `up --build -d`; `curl /healthz` |
 
 ## Secrets (deploy)
 
@@ -32,7 +32,7 @@ Set on the GitHub repo (Settings → Secrets). Empty `DEPLOY_SSH_KEY` skips the 
 ## Alternatives
 
 - Postgres service container instead of testcontainers: two ways to boot Postgres. testcontainers match local `go test`.
-- Live VM still `docker compose build`s from the Dockerfiles (does not pull GHCR yet). D4 can switch the VM to `image: ghcr.io/...`.
+- k3s pulls `ghcr.io/shashankxrm/deskdrop/{api,dashboard}:v2`. Compose rollback still builds from Dockerfiles.
 
 ## Failure modes
 

@@ -9,3 +9,4 @@ Architecture decision records land in this directory in the same step as the dec
 - [0005-cursor-history-ttl.md](0005-cursor-history-ttl.md) — B5.
 - [0006-per-pod-rate-limit.md](0006-per-pod-rate-limit.md) — B6.
 - [0007-pull-vs-push.md](0007-pull-vs-push.md) — B7 (C3 is the poll client).
+- [0008-compose-to-k3s.md](0008-compose-to-k3s.md) — D4.

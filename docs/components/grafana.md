@@ -1,6 +1,6 @@
 # Grafana (D0)
 
-v2 observability is slog + Prometheus `/metrics` on the live API. Grafana Cloud **free** stores the series. Do not run Grafana on the 6 GB VM.
+v2 observability is slog + Prometheus `/metrics` on the live API. Grafana Cloud **free** stores the series. Do not run Grafana on the 6 GB VM. D4 Alloy runs in k3s (`deploy/k8s/alloy.yaml`) and scrapes `api.deskdrop.svc:8080`.
 
 ## Panels (one dashboard)
 
@@ -21,7 +21,7 @@ Import [deploy/grafana/deskdrop.json](../../deploy/grafana/deskdrop.json):
    - numeric username
    - access policy token with `metrics:write`
 3. Put those in `deploy/prod/.env` as `GRAFANA_CLOUD_RW_URL`, `GRAFANA_CLOUD_USER`, `GRAFANA_CLOUD_TOKEN`.
-4. On the VM: `docker compose -f deploy/prod/compose.yaml --env-file deploy/prod/.env --profile metrics up -d`
+4. On the VM (D4): `sudo k3s kubectl apply -f ~/deskdrop/deploy/k8s/alloy.yaml` (secret `deskdrop` must already have the Grafana keys). Compose `--profile metrics` is the D0 rollback.
 5. Grafana Explore: `deskdrop_shares_total` should appear after a share.
 
 Public scrape (optional, basic auth):

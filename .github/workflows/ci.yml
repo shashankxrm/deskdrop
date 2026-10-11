@@ -160,7 +160,7 @@ jobs:
     timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
-      - name: rsync and compose up
+      - name: rsync and deploy
         env:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
@@ -186,5 +186,5 @@ jobs:
             --exclude '.env' \
             ./ "${DEPLOY_USER}@${DEPLOY_HOST}:~/deskdrop/"
           ssh -i ~/.ssh/deploy_key -o IdentitiesOnly=yes "${DEPLOY_USER}@${DEPLOY_HOST}" \
-            'cd ~/deskdrop && docker compose -f deploy/prod/compose.yaml --env-file deploy/prod/.env up --build -d'
+            'chmod +x ~/deskdrop/scripts/k3s-deploy.sh && ~/deskdrop/scripts/k3s-deploy.sh'
           curl -fsS --retry 8 --retry-delay 5 "https://shashank-dropdesk.duckdns.org/healthz"

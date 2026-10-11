@@ -1,6 +1,6 @@
 # Terraform / Oracle Cloud (A0)
 
-**A0 status: Ampere.** Always Free `VM.Standard.A1.Flex` is Running (1 OCPU / 6 GB). SSH: `uname -m` → `aarch64`. D0 is Compose+Caddy on this VM. D3 Terraform lives in [`infra/`](../../infra/). D4 k3s migrate is in-scope.
+**A0 status: Ampere.** Always Free `VM.Standard.A1.Flex` is Running (1 OCPU / 6 GB). SSH: `uname -m` → `aarch64`. D3 Terraform lives in [`infra/`](../../infra/). D4 k3s migrate: [`k3s.md`](k3s.md).
 
 | Field | Value |
 |---|---|
@@ -14,7 +14,7 @@
 | Public hostname | https://shashank-dropdesk.duckdns.org |
 | Notes | Ubuntu `ubuntu`. SSH wizard key `ssh-key-2026-10-10.key`. Keep Running. **D0:** Compose+Caddy on this VM ([deploy-compose-caddy.md](../runbooks/deploy-compose-caddy.md)). Postgres not published. NSG must allow 80/443. |
 
-D3 will Terraform-ify this shape. D4 (Compose → k3s) runs because outcome is `Ampere`.
+D3 Terraform-ifies this shape. D4 (Compose → k3s) runs because outcome is `Ampere`.
 
 ## What this is
 

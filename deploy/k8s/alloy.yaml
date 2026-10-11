@@ -1,0 +1,85 @@
+# Optional. Apply after deskdrop secret has GRAFANA_CLOUD_* keys.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: alloy
+  namespace: deskdrop
+data:
+  config.alloy: |
+    prometheus.scrape "deskdrop" {
+      targets = [{
+        __address__ = "api.deskdrop.svc:8080",
+      }]
+      metrics_path = "/metrics"
+      forward_to   = [prometheus.remote_write.gc.receiver]
+    }
+
+    prometheus.remote_write "gc" {
+      endpoint {
+        url = sys.env("GRAFANA_CLOUD_RW_URL")
+        basic_auth {
+          username = sys.env("GRAFANA_CLOUD_USER")
+          password = sys.env("GRAFANA_CLOUD_TOKEN")
+        }
+      }
+    }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: alloy
+  namespace: deskdrop
+  labels:
+    app: alloy
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: alloy
+  template:
+    metadata:
+      labels:
+        app: alloy
+    spec:
+      containers:
+        - name: alloy
+          image: grafana/alloy:v1.11.3
+          args:
+            - run
+            - --storage.path=/var/lib/alloy/data
+            - /etc/alloy/config.alloy
+          env:
+            - name: GRAFANA_CLOUD_RW_URL
+              valueFrom:
+                secretKeyRef:
+                  name: deskdrop
+                  key: GRAFANA_CLOUD_RW_URL
+            - name: GRAFANA_CLOUD_USER
+              valueFrom:
+                secretKeyRef:
+                  name: deskdrop
+                  key: GRAFANA_CLOUD_USER
+            - name: GRAFANA_CLOUD_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: deskdrop
+                  key: GRAFANA_CLOUD_TOKEN
+          volumeMounts:
+            - name: config
+              mountPath: /etc/alloy
+              readOnly: true
+            - name: data
+              mountPath: /var/lib/alloy/data
+          resources:
+            requests:
+              cpu: 20m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+      volumes:
+        - name: config
+          configMap:
+            name: alloy
+        - name: data
+          emptyDir: {}

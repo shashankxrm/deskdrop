@@ -21,7 +21,7 @@ go test ./...
 
 Docker must be running for `TestReadyz_ok`.
 
-CI (D1) runs `go vet ./...` and `go test ./...` as job **go-test**, plus dashboard, Android, agent compile, compose E2E, and Playwright. See [ci-cd.md](ci-cd.md).
+CI (D1) runs `go vet ./...` and `go test ./...` as job **go-test**, plus dashboard, Android, agent compile, compose E2E, and Playwright. Deploy after D4 is `kubectl apply` when k3s is active. See [ci-cd.md](ci-cd.md).
 
 `github.com/stretchr/testify` may appear as an **indirect** module of testcontainers-go. Our tests must not import it.
 

@@ -1,12 +1,12 @@
 # Architecture
 
-Updated D0. Update this file whenever a component joins the flow.
+Updated D4. Update this file whenever a component joins the flow.
 
 ## What it is
 
 deskdrop queues a URL from an Android share until a paired laptop agent pulls it, opens the default browser, and acks. One user is one pairing chain. Production target is a single Always Free Oracle **Ampere** VM (A0 recorded in [terraform.md](components/terraform.md)).
 
-Locally, Docker Compose runs Postgres 16, golang-migrate, and the Go API. The dashboard is `npm run dev` on port 3000 (proxies `/v1`). Production (D0) is Compose + Caddy on the Ampere VM: `https://<duckdns>/` dashboard, `/v1` API, `/metrics` basic-auth.
+Locally, Docker Compose runs Postgres 16, golang-migrate, and the Go API. The dashboard is `npm run dev` on port 3000 (proxies `/v1`). Production (D4) is single-node k3s on the Ampere VM: Traefik + cert-manager, `https://<duckdns>/` dashboard, `/v1` API, `/metrics` basic-auth. Compose+Caddy was D0 and remains the rollback.
 
 ## Components
 
@@ -17,7 +17,7 @@ Locally, Docker Compose runs Postgres 16, golang-migrate, and the Go API. The da
 | Android client | pairing + `ACTION_SEND` share | C1–C2 ([android.md](components/android.md)) |
 | macOS agent | pair, 10s poll, default browser, ack, LaunchAgent, 0600 config | C3 ([agent.md](components/agent.md)) |
 | Next.js dashboard | web pair + QR, devices, history, delete account, /privacy | C4 ([dashboard.md](components/dashboard.md), [privacy.md](privacy.md)) |
-| Oracle VM | Ampere A1 Flex 1 OCPU / 6 GB; Compose+Caddy HTTPS (DuckDNS); Terraform import in `infra/` | D0/D3 ([terraform.md](components/terraform.md), [deploy-compose-caddy.md](runbooks/deploy-compose-caddy.md), [scaling.md](scaling.md)) |
+| Oracle VM | Ampere A1 Flex 1 OCPU / 6 GB; k3s + Traefik + cert-manager (DuckDNS); Terraform import in `infra/` | D3/D4 ([terraform.md](components/terraform.md), [k3s.md](components/k3s.md), [migrate-compose-to-k3s.md](runbooks/migrate-compose-to-k3s.md), [scaling.md](scaling.md)) |
 | Grafana | Cloud free, Alloy remote_write; shares / acks / ack rate / p95 | D0 ([grafana.md](components/grafana.md)) |
 | CI | `go vet` + `go test ./...` on push/PR to `v2` | B1b ([ci-cd.md](components/ci-cd.md)); releases [release-checksums.sh](../scripts/release-checksums.sh) |
 
@@ -56,7 +56,8 @@ sequenceDiagram
 - Agent: [agent.md](components/agent.md) (`go test ./internal/agent/`, `tests/e2e/compose_agent.sh`)
 - Connect phone + laptop: [connect.md](connect.md)
 - Dashboard: [dashboard.md](components/dashboard.md) (`cd dashboard && npm test` / `npm run test:e2e`)
-- Prod: [deploy-compose-caddy.md](runbooks/deploy-compose-caddy.md) (`curl https://HOST/healthz`)
+- Prod: [k3s.md](components/k3s.md) (`curl https://HOST/healthz`, `kubectl -n deskdrop get pods`)
+- Compose rollback: [deploy-compose-caddy.md](runbooks/deploy-compose-caddy.md)
 - Grafana: [grafana.md](components/grafana.md)
-- CI: [ci-cd.md](components/ci-cd.md) (jobs including `images` → GHCR; deploy-on-merge)
+- CI: [ci-cd.md](components/ci-cd.md) (GHCR + `kubectl apply` when k3s is active)
 - Terraform: [terraform.md](components/terraform.md) (`infra/` import + plan; native `oci` backend, bucket `deskdrop-tfstate`)

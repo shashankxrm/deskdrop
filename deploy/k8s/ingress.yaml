@@ -1,0 +1,80 @@
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: metrics-auth
+  namespace: deskdrop
+spec:
+  basicAuth:
+    secret: metrics-auth
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: deskdrop
+  namespace: deskdrop
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - shashank-dropdesk.duckdns.org
+      secretName: deskdrop-tls
+  rules:
+    - host: shashank-dropdesk.duckdns.org
+      http:
+        paths:
+          - path: /v1
+            pathType: Prefix
+            backend:
+              service:
+                name: api
+                port:
+                  number: 8080
+          - path: /healthz
+            pathType: Exact
+            backend:
+              service:
+                name: api
+                port:
+                  number: 8080
+          - path: /readyz
+            pathType: Exact
+            backend:
+              service:
+                name: api
+                port:
+                  number: 8080
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: dashboard
+                port:
+                  number: 3000
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: deskdrop-metrics
+  namespace: deskdrop
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    traefik.ingress.kubernetes.io/router.middlewares: deskdrop-metrics-auth@kubernetescrd
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - shashank-dropdesk.duckdns.org
+      secretName: deskdrop-tls
+  rules:
+    - host: shashank-dropdesk.duckdns.org
+      http:
+        paths:
+          - path: /metrics
+            pathType: Exact
+            backend:
+              service:
+                name: api
+                port:
+                  number: 8080
