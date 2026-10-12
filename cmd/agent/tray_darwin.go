@@ -16,6 +16,8 @@ import (
 
 func runTray(ctx context.Context, r *agent.Runner, poll time.Duration, cfg agent.Config, cfgPath string) int {
 	code := 0
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
 	systray.Run(func() {
 		systray.SetTitle("DD")
 		systray.SetTooltip("deskdrop")
@@ -53,6 +55,8 @@ func runTray(ctx context.Context, r *agent.Runner, poll time.Duration, cfg agent
 					systray.Quit()
 					return
 				case <-mQuit.ClickedCh:
+					code = 0
+					cancel()
 					systray.Quit()
 					return
 				}

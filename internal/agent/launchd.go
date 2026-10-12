@@ -33,7 +33,10 @@ func LaunchAgentPlist(execPath, configPath string) ([]byte, error) {
 	<key>RunAtLoad</key>
 	<true/>
 	<key>KeepAlive</key>
-	<true/>
+	<dict>
+		<key>SuccessfulExit</key>
+		<false/>
+	</dict>
 	<key>ProcessType</key>
 	<string>Interactive</string>
 </dict>

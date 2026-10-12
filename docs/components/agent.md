@@ -37,7 +37,8 @@ Default `-api` is production HTTPS. For local Compose pass `-api http://127.0.0.
 
 ```bash
 go test ./internal/agent/
-go build -o /tmp/deskdrop-agent ./cmd/agent
+mkdir -p ~/.local/bin
+go build -o ~/.local/bin/deskdrop-agent ./cmd/agent
 
 docker compose up --build -d
 tests/e2e/compose_agent.sh
@@ -46,19 +47,20 @@ tests/e2e/compose_agent.sh
 # Manual (this Mac, Compose up):
 # 1. Phone already paired (C1). Mint a laptop code from the phone token:
 curl -sS http://127.0.0.1:8080/v1/pairings -H "Authorization: Bearer $PHONE"
-/tmp/deskdrop-agent pair -api http://127.0.0.1:8080 -code ABCD-EFGH
-/tmp/deskdrop-agent run
+~/.local/bin/deskdrop-agent pair -api http://127.0.0.1:8080 -code ABCD-EFGH
+~/.local/bin/deskdrop-agent run
 # Share from Android. Browser should open within ~10s.
 # Sleep the Mac 2+ minutes with a share in flight; on wake, one tab.
 
-# Start at login:
-/tmp/deskdrop-agent install
+# Start at login (plist KeepAlive SuccessfulExit=false: restart after crash, not Quit):
+~/.local/bin/deskdrop-agent install
 launchctl list | grep deskdrop
 # ls ~/Library/LaunchAgents/com.deskdrop.agent.plist
+# Tray Quit exits 0 so launchd does not relaunch.
 
 # Gatekeeper (unsigned):
 # System Settings → Privacy & Security → Open Anyway
-# or: xattr -d com.apple.quarantine /tmp/deskdrop-agent
+# or: xattr -d com.apple.quarantine ~/.local/bin/deskdrop-agent
 ```
 
 CI job **agent** compiles `./cmd/agent`. Compose drive is in **e2e**. See [ci-cd.md](ci-cd.md).

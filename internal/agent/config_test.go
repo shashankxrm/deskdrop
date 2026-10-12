@@ -91,10 +91,20 @@ func TestLaunchAgentPlist(t *testing.T) {
 		t.Fatal(err)
 	}
 	s := string(b)
-	for _, want := range []string{LaunchAgentLabel, "/opt/deskdrop/deskdrop-agent", "-config", "/tmp/cfg.json", "RunAtLoad"} {
+	for _, want := range []string{
+		LaunchAgentLabel,
+		"/opt/deskdrop/deskdrop-agent",
+		"-config",
+		"/tmp/cfg.json",
+		"RunAtLoad",
+		"SuccessfulExit",
+	} {
 		if !strings.Contains(s, want) {
 			t.Fatalf("missing %q in %s", want, s)
 		}
+	}
+	if strings.Contains(s, "<key>KeepAlive</key>\n	<true/>") {
+		t.Fatalf("KeepAlive must restart only after a crash, not <true/>:\n%s", s)
 	}
 	b2, err := LaunchAgentPlist("/tmp/a&b", "/tmp/c<d>")
 	if err != nil {
