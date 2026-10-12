@@ -2,6 +2,20 @@
 
 Updated E2. Update this file whenever a component joins the flow.
 
+## Step codes
+
+Labels from the v2 build plan:
+
+| Code | Meaning |
+|---|---|
+| A0 | Oracle Always Free VM (Ampere) |
+| A1 | Repo contract and v1 retrospective |
+| A2 | Compose, Postgres, schema migrations |
+| B | API (HTTP, pairing, auth, delivery, limits, compose E2E) |
+| C | Clients (Android, macOS agent, Next.js dashboard) |
+| D | Platform (public HTTPS, CI/CD, Terraform, k3s, backups) |
+| E | Ship (beta numbers, README) |
+
 ## What it is
 
 deskdrop queues a URL from an Android share until a paired laptop agent pulls it, opens the default browser, and acks. One user is one pairing chain. Production target is a single Always Free Oracle **Ampere** VM (A0 recorded in [terraform.md](components/terraform.md)).

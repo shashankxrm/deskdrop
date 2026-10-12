@@ -4,6 +4,12 @@ Postgres 16 holds users, devices, pairing codes, links, and per-laptop deliverie
 
 Local Compose uses user/password/db `deskdrop` / `deskdrop` / `deskdrop` on `localhost:5432`. That password is **local only**. Production secrets come from env later, never from this file.
 
+## Source of truth
+
+`diff -rq migrations/ deploy/k8s/migrations/` is empty: both trees are the same `000001_init` up/down SQL.
+
+**Edit [`migrations/`](../../migrations/)** (Compose bind-mounts it). [`deploy/k8s/migrations/`](../../deploy/k8s/migrations/) is a copy because kustomize cannot load files outside `deploy/k8s/` — copy after changing the source ([k3s.md](k3s.md)).
+
 ## Tables (migration `000001_init`)
 
 - **users** — one row per pairing chain (`id`, `created_at`).

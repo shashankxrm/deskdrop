@@ -1,6 +1,6 @@
 # Testing
 
-How to run each suite. This file grows with B/C steps. No testify. No mocked Postgres.
+How to run each suite. No testify. No mocked Postgres.
 
 ## Schema (A2)
 

@@ -13,7 +13,7 @@ Go `net/http` process (`go 1.26` in go.mod so testcontainers’ transitive modul
 
 ## Alternatives
 
-- Frameworks (chi, echo, gin): extra API surface to defend in interviews. stdlib is enough.
+- Frameworks (chi, echo, gin): extra API surface to maintain and secure. stdlib is enough.
 - OpenTelemetry traces: Post-v2. Request IDs + histogram are v2.
 
 ## Failure modes
