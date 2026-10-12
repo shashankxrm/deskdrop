@@ -36,7 +36,17 @@ jobs:
       - name: vet
         run: go vet ./...
       - name: test
-        run: go test ./...
+        run: |
+          set -euo pipefail
+          go test -coverprofile=coverage.out ./...
+          total="$(go tool cover -func=coverage.out | tail -1)"
+          echo "$total"
+          {
+            echo "### Go coverage"
+            echo "\`\`\`"
+            echo "$total"
+            echo "\`\`\`"
+          } >> "$GITHUB_STEP_SUMMARY"
 
   dashboard:
     name: dashboard
@@ -53,7 +63,16 @@ jobs:
           cache: npm
           cache-dependency-path: dashboard/package-lock.json
       - run: npm ci
-      - run: npm test
+      - name: test
+        run: |
+          set -euo pipefail
+          npx vitest run --coverage --coverage.reporter=text-summary | tee /tmp/vitest-coverage.txt
+          {
+            echo "### Dashboard coverage"
+            echo "\`\`\`"
+            grep -A6 "Coverage summary" /tmp/vitest-coverage.txt || cat /tmp/vitest-coverage.txt
+            echo "\`\`\`"
+          } >> "$GITHUB_STEP_SUMMARY"
       - run: npm run build
 
   android:

@@ -14,8 +14,8 @@ Every push and pull request to `v2` runs a secrets audit, Go, dashboard Vitest/b
 | Job | What |
 |---|---|
 | `secrets` | `./scripts/check-secrets.sh` (v1 defaults; no `compose-local-pepper` in prod) |
-| `go-test` | `go vet ./...` and `go test ./...` |
-| `dashboard` | `npm test` and `npm run build` in `dashboard/` |
+| `go-test` | `go vet ./...` and `go test -coverprofile=coverage.out ./...`; total line on `$GITHUB_STEP_SUMMARY` |
+| `dashboard` | `npx vitest run --coverage` (text-summary) and `npm run build`; statements % on `$GITHUB_STEP_SUMMARY` |
 | `android` | `./gradlew :app:testDebugUnitTest` |
 | `agent` | `go build ./cmd/agent` |
 | `e2e` | `docker compose up --build -d`, `tests/e2e/compose_api.sh` (includes agent), Playwright |

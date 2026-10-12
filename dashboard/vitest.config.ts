@@ -9,6 +9,10 @@ export default defineConfig({
     include: ["**/*.test.ts", "**/*.test.tsx"],
     exclude: ["node_modules", "e2e", ".next"],
     setupFiles: ["./vitest.setup.ts"],
+    coverage: {
+      provider: "v8",
+      reporter: ["text-summary"],
+    },
   },
   resolve: {
     alias: { "@": path.resolve(__dirname, ".") },
