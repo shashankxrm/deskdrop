@@ -1,10 +1,18 @@
 # deskdrop
 
+[![CI](https://github.com/shashankxrm/deskdrop/actions/workflows/ci.yml/badge.svg?branch=v2)](https://github.com/shashankxrm/deskdrop/actions/workflows/ci.yml?query=branch%3Av2)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Go 1.26](https://img.shields.io/badge/Go-1.26-00ADD8?logo=go&logoColor=white)](go.mod)
+
 Share a URL from Android; a paired Mac opens it in the default browser even if the laptop was asleep. No password. One pairing chain is one user.
 
 **Live:** [https://shashank-dropdesk.duckdns.org](https://shashank-dropdesk.duckdns.org) · **Privacy:** [/privacy](https://shashank-dropdesk.duckdns.org/privacy) · [docs/privacy.md](docs/privacy.md)
 
-**Stack:** Go `net/http` API, PostgreSQL 16 (the queue), Next.js dashboard, Kotlin share target, macOS Go tray — on one Always Free Oracle Ampere VM (k3s + Traefik + Let’s Encrypt).
+![deskdrop demo](docs/assets/demo.gif)
+
+**App:** Go net/http API · PostgreSQL 16 queue (pull + ack) · HMAC device tokens · Kotlin Android share target · Go macOS tray agent · Next.js dashboard
+
+**Infra:** Terraform → Oracle Always Free Ampere (arm64) · k3s · GHCR images built on ubuntu-24.04-arm · Grafana Cloud via Alloy · nightly pg_dump to Object Storage with a restore drill
 
 Two-minute walkthrough: [docs/follow-one-link.md](docs/follow-one-link.md). Pairing steps: [docs/connect.md](docs/connect.md). Why v1 failed: [docs/v1-retrospective.md](docs/v1-retrospective.md).
 
@@ -20,7 +28,9 @@ From production Postgres on **2026-10-12** (not fixtures; Prometheus counters re
 | Deliveries acked | 4 of 8 (50%) |
 | Pending-pull p95 | ~10 ms (`GET /v1/links/pending` histogram on a live API pod) |
 
-No formal SLO (Post-v2). Grafana Cloud scrapes `/metrics`.
+The other 4 deliveries still have `acked_at` NULL: pending on that laptop (not pulled or acked yet, or the agent died before ack). Unacked rows are kept; purge is only acked deliveries older than 30 days.
+
+No formal SLO yet. Grafana Cloud scrapes `/metrics`.
 
 ## How a share travels
 
@@ -43,7 +53,7 @@ sequenceDiagram
 
 ## Install (closed beta)
 
-Unsigned macOS binary: System Settings → Privacy & Security → **Open Anyway** (or `xattr -d com.apple.quarantine`). Checksums: `./scripts/release-checksums.sh` then `cd dist && shasum -a 256 -c SHA256SUMS`. Publish with `gh release create` when you cut a tag.
+Unsigned macOS binary: System Settings → Privacy & Security → **Open Anyway** (or `xattr -d com.apple.quarantine`).
 
 ### Mac agent
 

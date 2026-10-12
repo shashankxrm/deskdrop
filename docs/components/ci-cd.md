@@ -80,6 +80,8 @@ docker image inspect ghcr.io/shashankxrm/deskdrop/api:v2 --format '{{.Architectu
 
 ## Releases (D0)
 
+Publish with `gh release create` when you cut a tag.
+
 ```bash
 ./scripts/release-checksums.sh
 cd dist && shasum -a 256 -c SHA256SUMS
