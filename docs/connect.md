@@ -1,6 +1,6 @@
 # Connect phone, laptop, and this site
 
-Public beta: **https://shashank-dropdesk.duckdns.org**
+Public beta: **https://shashank-dropdesk.duckdns.org** (start here; README install: [../README.md](../README.md)).
 
 You are pairing three things onto **one chain**. A share only opens on laptops that were already paired **before** you sent the link.
 
