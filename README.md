@@ -53,34 +53,31 @@ sequenceDiagram
 
 ## Install (closed beta)
 
-Unsigned macOS binary: System Settings → Privacy & Security → **Open Anyway** (or `xattr -d com.apple.quarantine`).
+Download the APK and Mac agent from the **[latest GitHub Release](https://github.com/shashankxrm/deskdrop/releases/latest)** (`deskdrop-android-<tag>.apk`, `deskdrop-agent-darwin-arm64` or `deskdrop-agent-darwin-amd64`, and `SHA256SUMS`). Unsigned macOS binary: System Settings → Privacy & Security → **Open Anyway** (or `xattr -d com.apple.quarantine`).
 
-### Mac agent
+```bash
+chmod +x deskdrop-agent-darwin-arm64   # or -amd64
+# cd dist && shasum -a 256 -c SHA256SUMS
+# 1. Browser: https://shashank-dropdesk.duckdns.org → Start a new pairing
+# 2. Phone: install the APK, scan QR, Pair as phone
+# 3. Same code on the Mac:
+./deskdrop-agent-darwin-arm64 pair -code ABCD-EFGH
+./deskdrop-agent-darwin-arm64 run
+./deskdrop-agent-darwin-arm64 install   # LaunchAgent; Quit exits 0 so it does not relaunch
+```
+
+Default `-api` is production HTTPS. Gatekeeper: [docs/components/agent.md](docs/components/agent.md). Production Android API URL is pre-filled; share a YouTube link to **deskdrop**. Details: [docs/components/android.md](docs/components/android.md).
+
+### Build from source
 
 ```bash
 git clone -b v2 https://github.com/shashankxrm/deskdrop.git
 cd deskdrop
 mkdir -p ~/.local/bin
 go build -o ~/.local/bin/deskdrop-agent ./cmd/agent
-# 1. Browser: https://shashank-dropdesk.duckdns.org → Start a new pairing
-# 2. Phone: Scan QR, Pair as phone
-# 3. Same code on the Mac:
-deskdrop-agent pair -code ABCD-EFGH
-deskdrop-agent run
-deskdrop-agent install   # LaunchAgent; Quit exits 0 so it does not relaunch
-```
-
-Default `-api` is production HTTPS. Gatekeeper: [docs/components/agent.md](docs/components/agent.md).
-
-### Android
-
-```bash
-cd android
-./gradlew assembleDebug
+cd android && ./gradlew assembleDebug
 # install app/build/outputs/apk/debug/app-debug.apk
 ```
-
-Production API URL is pre-filled. Scan the dashboard QR, then share a YouTube link to **deskdrop**. Details: [docs/components/android.md](docs/components/android.md).
 
 ## Features
 

@@ -78,12 +78,14 @@ docker pull ghcr.io/shashankxrm/deskdrop/api:v2
 docker image inspect ghcr.io/shashankxrm/deskdrop/api:v2 --format '{{.Architecture}}'  # arm64
 ```
 
-## Releases (D0)
+## Releases
 
-Publish with `gh release create` when you cut a tag.
+Pushing a tag matching `v*` runs [`.github/workflows/release.yml`](../../.github/workflows/release.yml): debug APK (`deskdrop-android-<tag>.apk`), `deskdrop-agent-darwin-arm64` and `-amd64` (CGO on `macos-latest`), `SHA256SUMS`, then `softprops/action-gh-release`. Workflow `contents: read`; only the publish job has `contents: write`. No extra secrets (`GITHUB_TOKEN` is enough).
 
 ```bash
-./scripts/release-checksums.sh
-cd dist && shasum -a 256 -c SHA256SUMS
-gh release create v2-d0 dist/* --title 'v2 closed beta' --notes 'Unsigned Mac: Open Anyway.'
+git tag v2.0.0
+git push origin v2.0.0
+# then https://github.com/shashankxrm/deskdrop/releases/latest
 ```
+
+Local checksums without a tag: `./scripts/release-checksums.sh`.
