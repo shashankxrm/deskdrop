@@ -48,7 +48,7 @@ The January 2026 deskdrop (Kotlin + Node/Express/Socket.IO/MongoDB/Redis + Elect
 
 **What happened.** The Android client pointed at a Render URL. There was no Docker, Terraform, Kubernetes, or GitHub Actions in the repo. Secrets and hostnames lived in source.
 
-**v2 control.** Local Compose first (A2), then a public Compose+Caddy deploy (D0), Terraform of the Oracle VM recorded in A0 (D3), optional migrate to k3s if Ampere (D4). A0 is still **pending** (Oracle signup). Images and deploy pipelines are later steps; they will not bake tokens into the app.
+**v2 control.** Local Compose first (A2), public Compose+Caddy (D0), Terraform of the A0 VM (D3), k3s migrate (D4). Secrets stay in env / a k8s Secret ([secrets.md](runbooks/secrets.md)); CI greps v1 defaults.
 
 ## What v2 will not repeat on purpose
 

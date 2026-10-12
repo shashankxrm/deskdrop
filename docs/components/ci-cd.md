@@ -1,6 +1,6 @@
 # CI/CD
 
-Every push and pull request to `v2` runs Go, dashboard Vitest/build, Android unit tests, agent compile, compose E2E, and Playwright. Merge to `v2` deploys: **k3s `kubectl apply`** if the VM is running k3s, otherwise Compose. Forks cannot deploy (no secrets). No Windows `.exe`. k3d-in-CI is Post-v2 (A0 is Ampere).
+Every push and pull request to `v2` runs a secrets audit, Go, dashboard Vitest/build, Android unit tests, agent compile, compose E2E, and Playwright. Merge to `v2` deploys: **k3s `kubectl apply`** if the VM is running k3s, otherwise Compose. Forks cannot deploy (no secrets). No Windows `.exe`. k3d-in-CI is Post-v2 (A0 is Ampere).
 
 ## Why this way
 
@@ -13,6 +13,7 @@ Every push and pull request to `v2` runs Go, dashboard Vitest/build, Android uni
 
 | Job | What |
 |---|---|
+| `secrets` | `./scripts/check-secrets.sh` (v1 defaults; no `compose-local-pepper` in prod) |
 | `go-test` | `go vet ./...` and `go test ./...` |
 | `dashboard` | `npm test` and `npm run build` in `dashboard/` |
 | `android` | `./gradlew :app:testDebugUnitTest` |
@@ -49,7 +50,7 @@ Set on the GitHub repo (Settings → Secrets). Empty `DEPLOY_SSH_KEY` skips the 
 
 Workflow file: [`.github/workflows/ci.yml`](../../.github/workflows/ci.yml)
 
-Required check names: **go-test**, **dashboard**, **android**, **agent**, **e2e**, **images**.
+Required check names: **secrets**, **go-test**, **dashboard**, **android**, **agent**, **e2e**, **images**.
 
 ```bash
 go vet ./...

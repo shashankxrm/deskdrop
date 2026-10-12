@@ -1,6 +1,6 @@
 # Architecture
 
-Updated D4. Update this file whenever a component joins the flow.
+Updated D5. Update this file whenever a component joins the flow.
 
 ## What it is
 
@@ -19,7 +19,7 @@ Locally, Docker Compose runs Postgres 16, golang-migrate, and the Go API. The da
 | Next.js dashboard | web pair + QR, devices, history, delete account, /privacy | C4 ([dashboard.md](components/dashboard.md), [privacy.md](privacy.md)) |
 | Oracle VM | Ampere A1 Flex 1 OCPU / 6 GB; k3s + Traefik + cert-manager (DuckDNS); Terraform import in `infra/` | D3/D4 ([terraform.md](components/terraform.md), [k3s.md](components/k3s.md), [migrate-compose-to-k3s.md](runbooks/migrate-compose-to-k3s.md), [scaling.md](scaling.md)) |
 | Grafana | Cloud free, Alloy remote_write; shares / acks / ack rate / p95 | D0 ([grafana.md](components/grafana.md)) |
-| CI | `go vet` + `go test ./...` on push/PR to `v2` | B1b ([ci-cd.md](components/ci-cd.md)); releases [release-checksums.sh](../scripts/release-checksums.sh) |
+| CI | `go vet` + `go test ./...` on push/PR to `v2`; D5 secrets grep | B1b/D5 ([ci-cd.md](components/ci-cd.md), [secrets.md](runbooks/secrets.md)); releases [release-checksums.sh](../scripts/release-checksums.sh) |
 
 Queue choice: [ADR 0001 — Postgres as the delivery queue](adr/0001-postgres-as-queue.md). Pull vs push: [ADR 0007](adr/0007-pull-vs-push.md). Ack: [ADR 0004](adr/0004-at-least-once-ack.md). History/TTL: [ADR 0005](adr/0005-cursor-history-ttl.md). Limits: [ADR 0006](adr/0006-per-pod-rate-limit.md).
 
@@ -61,3 +61,4 @@ sequenceDiagram
 - Grafana: [grafana.md](components/grafana.md)
 - CI: [ci-cd.md](components/ci-cd.md) (GHCR + `kubectl apply` when k3s is active)
 - Terraform: [terraform.md](components/terraform.md) (`infra/` import + plan; native `oci` backend, bucket `deskdrop-tfstate`)
+- Secrets: [secrets.md](runbooks/secrets.md) (`./scripts/check-secrets.sh`)

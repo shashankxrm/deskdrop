@@ -37,7 +37,8 @@ cd android
 ./gradlew assembleDebug
 # APK: app/build/outputs/apk/debug/app-debug.apk
 
-unzip -p app/build/outputs/apk/debug/app-debug.apk classes*.dex 2>/dev/null | strings | grep -Ei 'compose-local-pepper|dev-token' && echo 'FAIL: secret in apk' || echo 'ok: no known secret strings'
+./scripts/check-secrets.sh
+unzip -p app/build/outputs/apk/debug/app-debug.apk classes*.dex 2>/dev/null | strings | grep -Ei 'compose-local-pepper|DEV_TOKEN' && echo 'FAIL: secret in apk' || echo 'ok: no known secret strings'
 ```
 
 LAN pair (phone and computer on the same Wi-Fi; Compose up):

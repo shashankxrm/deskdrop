@@ -99,3 +99,12 @@ npm run test:e2e
 ```
 
 Manual QR / unpair / delete: [dashboard.md](dashboard.md). Privacy copy: [privacy.md](../privacy.md).
+
+## Secrets (D5)
+
+```bash
+./scripts/check-secrets.sh
+DEVICE_TOKEN_PEPPER= DATABASE_URL= go run ./cmd/api ; echo exit:$?
+```
+
+CI job **secrets**. Injection: [secrets.md](../runbooks/secrets.md).
