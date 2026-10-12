@@ -108,3 +108,13 @@ DEVICE_TOKEN_PEPPER= DATABASE_URL= go run ./cmd/api ; echo exit:$?
 ```
 
 CI job **secrets**. Injection: [secrets.md](../runbooks/secrets.md).
+
+## Backups (D6)
+
+On the VM (needs `OCI_S3_*` in `deploy/prod/.env` and `awscli`):
+
+```bash
+./scripts/pg-restore-drill.sh
+```
+
+[backups.md](backups.md), [restore-postgres.md](../runbooks/restore-postgres.md).

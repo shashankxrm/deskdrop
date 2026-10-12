@@ -1,6 +1,6 @@
 # What breaks if
 
-Through D5 (secrets). Queue is Postgres ([ADR 0001](adr/0001-postgres-as-queue.md)); agents **pull** ([ADR 0007](adr/0007-pull-vs-push.md)).
+Through D6 (backups). Queue is Postgres ([ADR 0001](adr/0001-postgres-as-queue.md)); agents **pull** ([ADR 0007](adr/0007-pull-vs-push.md)).
 
 | Scenario | What happens | How to see |
 |---|---|---|
@@ -9,7 +9,7 @@ Through D5 (secrets). Queue is Postgres ([ADR 0001](adr/0001-postgres-as-queue.m
 | API process restarts | No in-memory queue. `links` / `link_deliveries` remain. In-memory claim + write buckets reset (brief extra burst, [ADR 0006](adr/0006-per-pod-rate-limit.md)). Two replicas: killing one pod does not drop pending rows. | Share, `kubectl -n deskdrop delete pod -l app=api`, pull — same pending id. |
 | Duplicate share | Unique `(user_id, idempotency_key)` on `links`. Replay is 200, same `id`, no second `link_deliveries` fan-out. `deskdrop_shares_total` does not increment. | `POST /v1/links` twice with the same `Idempotency-Key`. |
 | Device token leaks | `DELETE /v1/devices/{id}` (`revokeDevice`) sets `devices.revoked_at`. Next Bearer/cookie is 401 (`requireAuth`). DB dump has HMAC (`devices.token_hash`), not the raw token. Dashboard unpair of the laptop → agent poll 401. Pepper leak is worse: rotate `DEVICE_TOKEN_PEPPER` and re-pair every device ([secrets.md](runbooks/secrets.md)). | Dashboard **Unpair**; `./scripts/check-secrets.sh`; missing env → API exit 1. |
-| VM dies | Restore from backup (D6). A0 Ampere box is Running; keep it that way. | n/a until D6 |
+| VM dies | Restore gzip SQL from Object Storage `deskdrop-backups` ([restore-postgres.md](runbooks/restore-postgres.md)). Keep the instance Running. | `./scripts/pg-restore-drill.sh` (sidecar DB, not live overwrite) |
 | TLS cert expires | cert-manager renews Let’s Encrypt via Traefik HTTP-01. If DuckDNS A record or port 80 breaks, HTTPS fails. | `curl -vI https://HOST/healthz`; `kubectl -n deskdrop describe certificate deskdrop-tls` |
 | 6th wrong claim / IP / min | `claimPairing` + in-memory window → 429 | [rate-limiter.md](components/rate-limiter.md) |
 | 6th pairing create / IP burst | `withWriteLimit` token bucket → 429 | same |

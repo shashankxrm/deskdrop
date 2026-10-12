@@ -11,7 +11,7 @@ It will **not** take: a global rate limiter (Post-v2), in-cluster Grafana (RAM),
 ## Bottlenecks, in order
 
 1. **DuckDNS / Let’s Encrypt** — cert fail if the A record is wrong or port 80 is filtered (OCI iptables). cert-manager HTTP-01 needs Traefik on 80.
-2. **Postgres on the same disk** — fine for beta; D6 adds `pg_dump` off-box.
+2. **Postgres on the same disk** — nightly `pg_dump` to Object Storage ([backups.md](components/backups.md)).
 3. **Fan-out at share** — one insert per currently paired laptop. Dozens of laptops per user is still small.
 4. **1 OCPU** — JSON slog + `/metrics` histogram are cheap vs TLS and Next.
 

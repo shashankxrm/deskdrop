@@ -14,6 +14,7 @@ Secrets live in env or a Kubernetes Secret. They are never in git. Missing `DEVI
 | k3s Secret `deskdrop` | namespace `deskdrop` |
 | Grafana Cloud token | same Secret / `.env` |
 | GitHub `DEPLOY_SSH_KEY` | Actions only |
+| `OCI_S3_ACCESS_KEY` / `OCI_S3_SECRET_KEY` | VM `.env`; nightly `pg_dump` to `deskdrop-backups` |
 
 `.env.example` and `deploy/prod/env.example` stay empty. Local Compose may set `compose-local-pepper` in [`deploy/compose/compose.yaml`](../../deploy/compose/compose.yaml); production must not.
 

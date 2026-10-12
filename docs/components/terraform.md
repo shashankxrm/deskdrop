@@ -18,7 +18,7 @@ D3 Terraform-ifies this shape. D4 (Compose → k3s) runs because outcome is `Amp
 
 ## What this is
 
-deskdrop v2 production is one Always Free Oracle Cloud VM. Terraform (D3) will own VCN, NSG (22/80/443), the VM, DuckDNS, and Object Storage for state and Postgres backups. A0 is the human gate: create the account and **claim the VM now**, before any app code.
+deskdrop v2 production is one Always Free Oracle Cloud VM. Terraform owns VCN, NSG (22/80/443), the VM, DuckDNS, and Object Storage for state (`deskdrop-tfstate`) and Postgres backups (`deskdrop-backups`, [backups.md](backups.md)). A0 is the human gate: create the account and **claim the VM now**, before any app code.
 
 Always Free Ampere A1 (as of this writing): **2 OCPU and 12 GB RAM total** per tenancy (`VM.Standard.A1.Flex`), home region only. That is enough for Compose and for k3s later. The AMD micro (`VM.Standard.E2.1.Micro`, 1 GB) is **not** a k3s host.
 
