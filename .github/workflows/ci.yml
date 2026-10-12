@@ -130,8 +130,9 @@ jobs:
   images:
     name: images
     needs: [go-test, dashboard, android, agent, e2e, secrets]
-    runs-on: ubuntu-latest
-    timeout-minutes: 45
+    # Native aarch64: Ampere cannot run amd64, and QEMU npm ci times out on ubuntu-latest.
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 25
     permissions:
       contents: read
       packages: write
@@ -140,15 +141,13 @@ jobs:
       DASH_IMAGE: ghcr.io/${{ github.repository }}/dashboard
     steps:
       - uses: actions/checkout@v4
-      - uses: docker/setup-qemu-action@v3
-      - uses: docker/setup-buildx-action@v3
-      - name: build (host arch, for checks)
+      - name: build linux/arm64
         run: |
-          docker build -f deploy/compose/Dockerfile.api -t deskdrop-api:ci .
-          docker build -f deploy/compose/Dockerfile.dashboard -t deskdrop-dashboard:ci .
+          docker build -f deploy/compose/Dockerfile.api -t "$API_IMAGE:${GITHUB_SHA}" -t deskdrop-api:ci .
+          docker build -f deploy/compose/Dockerfile.dashboard -t "$DASH_IMAGE:${GITHUB_SHA}" -t deskdrop-dashboard:ci .
       - name: non-root and no secrets in image
         run: ./scripts/check-images.sh deskdrop-api:ci deskdrop-dashboard:ci
-      - name: push linux/amd64,linux/arm64 to GHCR
+      - name: push linux/arm64 to GHCR
         run: |
           set -euo pipefail
           if [ "${GITHUB_EVENT_NAME}" != push ] || [ "${GITHUB_REF}" != refs/heads/v2 ]; then
@@ -156,12 +155,12 @@ jobs:
             exit 0
           fi
           echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
-          docker buildx build --platform linux/amd64,linux/arm64 \
-            -f deploy/compose/Dockerfile.api \
-            -t "$API_IMAGE:${GITHUB_SHA}" -t "$API_IMAGE:v2" --push .
-          docker buildx build --platform linux/amd64,linux/arm64 \
-            -f deploy/compose/Dockerfile.dashboard \
-            -t "$DASH_IMAGE:${GITHUB_SHA}" -t "$DASH_IMAGE:v2" --push .
+          docker tag deskdrop-api:ci "$API_IMAGE:v2"
+          docker tag deskdrop-dashboard:ci "$DASH_IMAGE:v2"
+          docker push "$API_IMAGE:${GITHUB_SHA}"
+          docker push "$API_IMAGE:v2"
+          docker push "$DASH_IMAGE:${GITHUB_SHA}"
+          docker push "$DASH_IMAGE:v2"
 
   deploy:
     name: deploy
