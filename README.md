@@ -4,7 +4,21 @@ Share a link from Android and have it open in your laptop browser the next time 
 
 v2 is a rebuild: phone and laptop are devices under one pairing chain, links sit in Postgres until the laptop pulls and acks them, and nothing is deleted on the way.
 
-Closed beta is D0: Compose + Caddy on the Always Free Ampere VM. Set the DuckDNS hostname in `deploy/prod/.env`. Local Compose remains for development.
+Closed beta is live at [https://shashank-dropdesk.duckdns.org](https://shashank-dropdesk.duckdns.org) (k3s on Always Free Ampere). Local Compose remains for development. Privacy: [docs/privacy.md](docs/privacy.md) and [https://shashank-dropdesk.duckdns.org/privacy](https://shashank-dropdesk.duckdns.org/privacy).
+
+## Key numbers
+
+From production Postgres on **2026-10-12** (not fixtures; Prometheus counters reset when API pods restart):
+
+| | |
+|---|---|
+| Pairing chains (users) | 6 |
+| Devices | 13 |
+| Links shared | 8 |
+| Deliveries acked | 4 of 8 (50%) |
+| Pending-pull p95 | ~10 ms (`GET /v1/links/pending` histogram on a live API pod) |
+
+No formal SLO (Post-v2). Grafana Cloud scrapes `/metrics`.
 
 ## Features (when v2 is live)
 

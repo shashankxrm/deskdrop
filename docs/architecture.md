@@ -1,6 +1,6 @@
 # Architecture
 
-Updated D6. Update this file whenever a component joins the flow.
+Updated E1. Update this file whenever a component joins the flow.
 
 ## What it is
 

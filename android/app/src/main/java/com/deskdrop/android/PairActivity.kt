@@ -2,6 +2,7 @@ package com.deskdrop.android
 
 import android.content.ClipboardManager
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -68,6 +69,11 @@ class PairActivity : AppCompatActivity() {
             )
         }
         pair.setOnClickListener { startPair() }
+        findViewById<TextView>(R.id.privacy).setOnClickListener {
+            val base = apiUrl.text?.toString()?.trim()?.trimEnd('/')
+                ?: getString(R.string.api_url_default)
+            startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("$base/privacy")))
+        }
         findViewById<Button>(R.id.sendLink).setOnClickListener { sendFromBox() }
         unpair.setOnClickListener {
             store.clear()

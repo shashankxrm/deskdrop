@@ -20,4 +20,5 @@
     <string name="share_url_label">Send a URL (no share sheet)</string>
     <string name="share_url_hint">https://youtube.com/watch?v=…</string>
     <string name="send_link">Send to queue</string>
+    <string name="privacy">Privacy</string>
 </resources>

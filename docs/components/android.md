@@ -4,7 +4,7 @@ The phone is a `phone` device. C1 claims a pairing code and stores the token in 
 
 ## Why this way
 
-- Production API URL is `https://shashank-dropdesk.duckdns.org` (pre-filled). Local Compose: `http://<lan-ip>:8080`. Emulator: `http://10.0.2.2:8080`. See [connect.md](../connect.md).
+- Production API URL is `https://shashank-dropdesk.duckdns.org` (pre-filled). Local Compose: `http://<lan-ip>:8080`. Emulator: `http://10.0.2.2:8080`. Privacy: in-app **Privacy** opens `{API}/privacy`. See [connect.md](../connect.md) and [privacy.md](../privacy.md).
 - Token at rest is AndroidX Security crypto (AES-256). The UI shows device id, never the token.
 - Claim and share retries use **full jitter** backoff on 429/5xx/IO. 404/409/410/4xx do not retry.
 - QR payload is `https://host/connect?code=ABCD-EFGH` (fills API URL + code). Older `deskdrop:https://host|CODE` still parses. Scan auto-claims. Pair stays enabled so you can switch chains without Forget.

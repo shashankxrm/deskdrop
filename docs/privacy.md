@@ -8,4 +8,4 @@ deskdrop has no email or password. A user is the set of devices that claimed pai
 - **Delete.** `DELETE /v1/account` removes the user and cascaded devices, pairing codes, links, and deliveries.
 - **Unpair.** `DELETE /v1/devices/{id}` sets `revoked_at`. The next request with that token is 401 (laptop tray poll included).
 
-Dashboard page: `/privacy`. Linked from the app and this file.
+Dashboard page: `/privacy` (footer). Android pairing screen: **Privacy**. README: [Key numbers](../README.md).
